@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>總經互動畫板</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Macro edition. Layout: a teacher's board — grouped template tabs on top, a large graph-paper board on the left, a control rail on the right; stacks on narrow screens */
+:root{
+  --bg:#e9eee9; --surface:#f6f8f5; --board:#fdfefc; --ink:#1b2621; --muted:#5a6a61;
+  --rule:#cdd7d0; --grid:#e4eae5; --accent:#1d6b57; --accent-ink:#ffffff;
+  --cD:#2457b3; --cS:#c24a12; --cMC:#b0246f; --cATC:#1d7a5c; --cAVC:#8a7414; --cMR:#6a49c9; --cP:#27322d;
+  --aCS:#3d7be0; --aPS:#e3940e; --aDWL:#7a808c; --aPro:#1c9a54; --aLoss:#d23b3b; --aop:.22;
+  --good:#1c7a46; --warn:#9a6400; --bad:#b83232;
+  --inkR:#d23b3b; --inkB:#2457b3;
+  --f-hand:"LXGW WenKai TC","Kaiti TC","BiauKai","DFKai-SB","KaiTi",serif;
+  --f-ui:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111916; --surface:#17221e; --board:#1a2823; --ink:#e6eee8; --muted:#97aa9f;
+    --rule:#2d3d36; --grid:#22332c; --accent:#7ccfb4; --accent-ink:#0f1915;
+    --cD:#86aefc; --cS:#ff9b6a; --cMC:#f283c2; --cATC:#6fd5a9; --cAVC:#dcc66e; --cMR:#b9a4ff; --cP:#e6eee8;
+    --aCS:#6c9cf5; --aPS:#f2b23e; --aDWL:#a3acb9; --aPro:#3fcf7d; --aLoss:#ff6b6b; --aop:.3;
+    --good:#5fd394; --warn:#f0b54a; --bad:#ff7b7b; --inkR:#ff8a80; --inkB:#8fb4ff;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111916; --surface:#17221e; --board:#1a2823; --ink:#e6eee8; --muted:#97aa9f;
+  --rule:#2d3d36; --grid:#22332c; --accent:#7ccfb4; --accent-ink:#0f1915;
+  --cD:#86aefc; --cS:#ff9b6a; --cMC:#f283c2; --cATC:#6fd5a9; --cAVC:#dcc66e; --cMR:#b9a4ff; --cP:#e6eee8;
+  --aCS:#6c9cf5; --aPS:#f2b23e; --aDWL:#a3acb9; --aPro:#3fcf7d; --aLoss:#ff6b6b; --aop:.3;
+  --good:#5fd394; --warn:#f0b54a; --bad:#ff7b7b; --inkR:#ff8a80; --inkB:#8fb4ff;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:14px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 24px}
+.app{max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.top{display:flex;flex-direction:column;gap:10px}
+.brand h1{font-family:var(--f-hand);font-weight:700;font-size:1.7rem;margin:0;letter-spacing:.02em;line-height:1.15;text-wrap:balance}
+.brand h1 small{font-size:.65em;font-weight:400;color:var(--muted)}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:.85rem}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:4px}
+.tg{display:flex;flex-wrap:wrap;align-items:center;gap:2px}
+.tg>span{font-size:.72rem;color:var(--muted);letter-spacing:.06em;margin:0 6px 0 8px}
+.tabs .tg+.tg{border-left:1px solid var(--rule);padding-left:4px}
+@media (max-width:760px){.tabs{flex-direction:column}.tabs .tg+.tg{border-left:0;padding-left:0;border-top:1px solid var(--rule);padding-top:4px}}
+.tabs button{font:inherit;font-size:.88rem;border:0;background:transparent;color:var(--muted);padding:6px 11px;border-radius:7px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.tabs button:focus-visible,.tool button:focus-visible,.side button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.work{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:12px;align-items:start}
+@media (max-width:960px){.work{grid-template-columns:minmax(0,1fr)}}
+.board-wrap{background:var(--board);border:1px solid var(--rule);border-radius:12px;overflow:hidden;min-width:0;display:flex;flex-direction:column}
+.board-wrap:fullscreen{border-radius:0;justify-content:center}
+.board-wrap:fullscreen svg{height:calc(100vh - 60px);width:auto;max-width:100%;margin:0 auto}
+.tool{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--rule);background:var(--surface)}
+.tool .grp{display:flex;gap:2px;background:var(--bg);border-radius:8px;padding:2px}
+.tool button{font:inherit;font-size:.82rem;border:0;background:transparent;color:var(--ink);padding:5px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.tool button[aria-pressed="true"]{background:var(--board);box-shadow:0 0 0 1px var(--rule);font-weight:600}
+.tool .plain{border:1px solid var(--rule);background:var(--board)}
+.tool .plain[aria-pressed="true"]{border-color:var(--accent)}
+.tool .sp{flex:1}
+.sw{width:18px;height:18px;border-radius:50%;border:2px solid var(--board);box-shadow:0 0 0 1px var(--rule);padding:0!important}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
+.tool .sw.k,.tool .sw.k[aria-pressed="true"]{background:var(--ink)}.tool .sw.r,.tool .sw.r[aria-pressed="true"]{background:var(--inkR)}.tool .sw.b,.tool .sw.b[aria-pressed="true"]{background:var(--inkB)}
+svg#board{display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}
+svg#board.pen{cursor:crosshair}
+.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:12px 14px}
+.card h2{font-size:.75rem;letter-spacing:.1em;color:var(--muted);margin:0 0 8px;font-weight:600}
+.sec+.sec{margin-top:12px;padding-top:10px;border-top:1px dashed var(--rule)}
+.layers{display:flex;flex-direction:column;gap:5px}
+.layers label{display:flex;align-items:center;gap:8px;cursor:pointer;line-height:1.35}
+.layers input{accent-color:var(--accent);width:16px;height:16px;margin:0;flex:none}
+.chipc{width:12px;height:12px;border-radius:3px;flex:none}
+.chipl{width:16px;height:0;border-top:3px solid;flex:none}
+.chipd{width:9px;height:9px;border-radius:50%;flex:none;margin:0 3.5px}
+.sh{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 8px;margin-bottom:8px}
+.sh h2{margin:0}
+.mini{display:flex;gap:4px}
+.mini button{font:inherit;font-size:.75rem;border:1px solid var(--rule);background:var(--board);color:var(--ink);padding:2px 8px;border-radius:6px;cursor:pointer}
+.mini button:hover{border-color:var(--accent)}
+.cv.sel .stroke{stroke-width:5}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.chips button{font:inherit;font-size:.82rem;border:1px solid var(--rule);background:var(--board);color:var(--ink);padding:3px 9px;border-radius:6px;cursor:pointer}
+.chips button:hover{border-color:var(--accent)}
+.chips .swc{width:22px;height:22px;padding:0;border-radius:50%;background:var(--c);border:2px solid var(--board);box-shadow:0 0 0 1px var(--rule)}
+.chips .swc[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
+.fl{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted)}
+.side input[type="text"]{font:inherit;font-size:.9rem;padding:5px 8px;border:1px solid var(--rule);border-radius:6px;background:var(--board);color:var(--ink);width:100%;min-width:0}
+.side input[type="text"]:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.axin{display:flex;gap:8px}
+.axin label{display:flex;align-items:center;gap:6px;flex:1;min-width:0;font-size:.85rem;color:var(--muted)}
+.empty{font-family:var(--f-ui);font-size:15px;fill:var(--muted)}
+#board .gd,#board .pt,#board .ptl,#board .cl,#board .ax,#board .axt,#board .tick,#board .br,#board .brt,#board .tag,#board .empty,#board .msg,#board .gridl,#board .axis{pointer-events:none}
+.seg{display:flex;flex-wrap:wrap;gap:2px;background:var(--bg);border-radius:8px;padding:2px}
+.seg button{flex:1 1 auto;font:inherit;font-size:.85rem;border:0;background:transparent;color:var(--muted);padding:6px 8px;border-radius:6px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--board);color:var(--ink);font-weight:600;box-shadow:0 0 0 1px var(--rule)}
+.ro{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;margin:0}
+.ro dt{color:var(--muted);font-size:.85rem;line-height:1.35}
+.ro dd{margin:0;font-family:var(--f-num);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.ro .sep{grid-column:1/-1;border-top:1px dashed var(--rule);margin:3px 0}
+.ro .em{font-weight:600;color:var(--ink)}
+.status{display:inline-block;font-size:.85rem;padding:3px 10px;border-radius:12px;margin-bottom:10px;border:1px solid currentColor;line-height:1.35}
+.status.good{color:var(--good)}.status.warn{color:var(--warn)}.status.bad{color:var(--bad)}.status.neutral{color:var(--muted)}
+.acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.acts button{font:inherit;font-size:.82rem;border:1px solid var(--rule);background:var(--board);color:var(--ink);padding:5px 10px;border-radius:7px;cursor:pointer}
+.acts button:hover,.tool .plain:hover{border-color:var(--accent)}
+.hint{color:var(--muted);font-size:.85rem;margin:0}
+.hint b{color:var(--ink);font-weight:600}
+.hint .zh{display:block;margin-top:6px}
+/* SVG */
+.gridl{stroke:var(--grid);stroke-width:1}
+.axis{stroke:var(--ink);stroke-width:2;fill:none}
+.ax{font-family:var(--f-hand);font-size:16px;fill:var(--ink)}
+.ax .num,.tick{font-family:var(--f-num);font-size:11px;fill:var(--muted)}
+.axt{font-family:var(--f-hand);font-size:17px;fill:var(--ink);font-weight:700}
+.cv .stroke{fill:none;stroke:var(--c);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.cv.thin .stroke{stroke-width:2.2}
+.cv.dash .stroke{stroke-dasharray:8 6}
+.cv .hit{fill:none;stroke:transparent;stroke-width:22;pointer-events:stroke}
+.cv[data-drag]{cursor:grab}
+.cv[data-drag]:hover .stroke{stroke-width:4.5}
+.cv.marker .stroke{stroke-width:1.8;stroke-dasharray:3 5}
+.cv.marker:hover .stroke{stroke-width:2.6}
+.knob{fill:var(--c);stroke:var(--board);stroke-width:2}
+.ghost .stroke{stroke-width:2;stroke-dasharray:6 6;opacity:.55}
+.cD{--c:var(--cD)}.cS{--c:var(--cS)}.cMC{--c:var(--cMC)}.cATC{--c:var(--cATC)}.cAVC{--c:var(--cAVC)}.cMR{--c:var(--cMR)}.cP{--c:var(--cP)}
+.cl{font-family:var(--f-hand);font-size:19px;font-weight:700;fill:var(--c)}
+.cl.sm{font-size:15px;font-weight:400}
+.cl.ghost{opacity:.6;font-weight:400}
+.ar{stroke:none;fill-opacity:var(--aop);pointer-events:none}
+.aCS{fill:var(--aCS)}.aPS{fill:var(--aPS)}.aDWL{fill:var(--aDWL)}.aPro{fill:var(--aPro)}.aLoss{fill:var(--aLoss)}
+.tag{font-family:var(--f-hand);font-size:16px;font-weight:700;pointer-events:none;text-anchor:middle}
+.tCS{fill:var(--aCS)}.tPS{fill:var(--aPS)}.tDWL{fill:var(--aDWL)}.tPro{fill:var(--aPro)}.tLoss{fill:var(--aLoss)}
+.gd{stroke:var(--muted);stroke-width:1.3;stroke-dasharray:4 4;fill:none}
+.faint .gd{opacity:.5}
+.pt{fill:var(--ink);stroke:var(--board);stroke-width:2}
+.pt.hollow{fill:var(--board);stroke:var(--muted);stroke-width:2}
+.ptl{font-family:var(--f-hand);font-size:15px;fill:var(--ink)}
+.ptl.small{font-size:13px;fill:var(--muted)}
+.hd{cursor:grab}
+.hd .hhit{fill:transparent}
+.hd .hdot{fill:var(--board);stroke:var(--c);stroke-width:2.5}
+.hd:hover .hdot{fill:var(--c)}
+.br{stroke:var(--ink);stroke-width:1.6}
+.brt{font-family:var(--f-hand);font-size:15px;fill:var(--ink);text-anchor:middle}
+.mk path{fill:var(--ink)}
+.ink{fill:none;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.ink.k{stroke:var(--ink)}.ink.r{stroke:var(--inkR)}.ink.b{stroke:var(--inkB)}
+.msg{font-family:var(--f-ui);font-size:14px;fill:var(--bad)}
+svg.pen .cv[data-drag],svg.pen .hd{cursor:crosshair}
+@media (prefers-reduced-motion:no-preference){.tabs button,.tool button{transition:background .15s}}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <h1>Macro Econ Board <small>(總經互動畫板)</small></h1>
+      <p>Drag the curves; equilibrium, gaps and policy effects update live (拖曲線，均衡、缺口與政策效果即時重算)</p>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Graph templates (圖形模板)">
+      <div class="tg"><span>Blank (空白)</span>
+        <button role="tab" data-tpl="free">Free Draw (自由作圖)</button>
+      </div>
+      <div class="tg"><span>Output &amp; Price Level (產出與物價)</span>
+        <button role="tab" data-tpl="adas">AD–AS (總合供需)</button>
+        <button role="tab" data-tpl="keyn">Keynesian Cross (凱因斯十字)</button>
+      </div>
+      <div class="tg"><span>Money &amp; Finance (貨幣與金融)</span>
+        <button role="tab" data-tpl="money">Money Market (貨幣市場)</button>
+        <button role="tab" data-tpl="chain">Monetary Policy (貨幣政策傳遞)</button>
+        <button role="tab" data-tpl="loan">Loanable Funds (可貸資金市場)</button>
+      </div>
+      <div class="tg"><span>Inflation &amp; Open Economy (通膨與開放經濟)</span>
+        <button role="tab" data-tpl="pc">Phillips Curve (菲利普曲線)</button>
+        <button role="tab" data-tpl="fx">Foreign Exchange (外匯市場)</button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="work">
+    <section class="board-wrap" id="boardWrap">
+      <div class="tool">
+        <div class="grp" role="group" aria-label="Tool (工具)">
+          <button id="tDrag" aria-pressed="true"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1v12M1 7h12M7 1 5 3M7 1l2 2M7 13l-2-2M7 13l2-2M1 7l2-2M1 7l2 2M13 7l-2-2M13 7l-2 2" stroke="currentColor" stroke-width="1.4" fill="none"/></svg>Drag (拖曲線)</button>
+          <button id="tPen" aria-pressed="false"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 12l1-3 7-7 2 2-7 7-3 1z" stroke="currentColor" stroke-width="1.4" fill="none"/></svg>Pen (畫筆)</button>
+        </div>
+        <button class="sw k" data-pc="k" aria-pressed="true" aria-label="Black pen (黑筆)"></button>
+        <button class="sw r" data-pc="r" aria-pressed="false" aria-label="Red pen (紅筆)"></button>
+        <button class="sw b" data-pc="b" aria-pressed="false" aria-label="Blue pen (藍筆)"></button>
+        <button class="plain" id="tUndo">Undo (復原一筆)</button>
+        <button class="plain" id="tClear">Clear ink (清除筆跡)</button>
+        <span class="sp"></span>
+        <button class="plain" id="tNums" aria-pressed="false">Values (顯示數值)</button>
+        <button class="plain" id="tFull">Full screen (全螢幕)</button>
+      </div>
+      <svg id="board" viewBox="0 0 640 532" role="img" aria-label="Macroeconomics graph board (總經圖形畫板)"></svg>
+    </section>
+
+    <aside class="side">
+      <div class="card"><div id="ctrl"></div></div>
+      <div class="card"><h2>VALUES (數值)</h2><div id="ro"></div></div>
+      <div class="card"><h2>HOW TO USE (操作方式)</h2><p class="hint" id="hint"></p></div>
+    </aside>
+  </main>
+</div>
+
+<script>
+(function(){
+/* ---------- frames ---------- */
+const VW=640,VH=532;
+const FRAMES={
+  main:{x:74,y:26,w:536,h:422,qmax:100,pmax:100,tq:20,tp:20,gq:10,gp:10},
+  pc:{x:74,y:26,w:536,h:422,qmax:12,pmax:10,tq:2,tp:2,gq:1,gp:1},
+  mL:{x:62,y:30,w:236,h:400,qmax:100,pmax:100,tq:25,tp:25,gq:10,gp:10},
+  mR:{x:384,y:30,w:236,h:400,qmax:100,pmax:100,tq:25,tp:25,gq:10,gp:10}
+};
+const FRM={pc:'pc',chain:'mL'};
+let FR=FRAMES.main;
+const X=q=>FR.x+q/FR.qmax*FR.w, Y=p=>FR.y+(1-p/FR.pmax)*FR.h;
+const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+const cp=p=>cl(p,-0.8*FR.pmax,1.8*FR.pmax);
+const ok=v=>Number.isFinite(v);
+const f1=v=>ok(v)?(Math.round(v*10)/10).toFixed(1):'—';
+const f2=v=>ok(v)?(Math.round(v*100)/100).toFixed(2):'—';
+const sg1=v=>ok(v)?(v>=0?'+':'')+f1(v):'—';
+const copy=o=>JSON.parse(JSON.stringify(o));
+const r1=v=>v.toFixed(1);
+const escH=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const escA=t=>escH(t).replace(/"/g,'&quot;');
+
+/* ---------- math ---------- */
+function lf(Ln){const s=(Ln.y2-Ln.y1)/(Ln.x2-Ln.x1),b=Ln.y1-s*Ln.x1;return{s,b,P:q=>b+s*q,Q:p=>(p-b)/s};}
+const lin=(s,b)=>({s,b,P:q=>b+s*q,Q:p=>(p-b)/s});
+function inter(a,b){if(Math.abs(a.s-b.s)<1e-9)return null;const q=(b.b-a.b)/(a.s-b.s);return{q,p:a.P(q)};}
+const same=(a,b)=>{const A=lf(a),B=lf(b);return Math.abs(A.s-B.s)<0.005&&Math.abs(A.b-B.b)<0.3;};
+/* keep a dragged line's handles inside the 0–100 box: clip the infinite line to the box, then inset the ends */
+function fitLine(L){const dx=L.x2-L.x1,dy=L.y2-L.y1;let t0=-1e4,t1=1e4;
+  for(const[p,q]of[[-dx,L.x1],[dx,100-L.x1],[-dy,L.y1],[dy,100-L.y1]]){if(Math.abs(p)<1e-12){if(q<0)return null;continue;}const r=q/p;if(p<0)t0=Math.max(t0,r);else t1=Math.min(t1,r);}
+  if(t1-t0<1e-9)return null;const a=[L.x1+t0*dx,L.y1+t0*dy],b=[L.x1+t1*dx,L.y1+t1*dy];if(Math.hypot(b[0]-a[0],b[1]-a[1])<12)return null;
+  const k=0.05,A=[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k],B=[b[0]-(b[0]-a[0])*k,b[1]-(b[1]-a[1])*k];
+  return A[0]<=B[0]?{x1:A[0],y1:A[1],x2:B[0],y2:B[1]}:{x1:B[0],y1:B[1],x2:A[0],y2:A[1]};}
+
+/* ---------- curve & option lists ---------- */
+const lG=['guide','Guide lines (輔助虛線)','--muted'];
+const LINES={
+  free:[lG],
+  adas:[['AD','Aggregate demand AD (總合需求)','--cD'],['AS','Short-run aggregate supply SRAS (短期總合供給)','--cS'],['LRAS','Long-run aggregate supply LRAS (長期總合供給)','--cP'],lG],
+  keyn:[['AE','Aggregate expenditure AE (總支出)','--cD'],['d45','45° line (45 度線)','--cP'],['yf','Potential output Yf (潛在產出)','--cP'],lG],
+  money:[['MS','Money supply MS (貨幣供給)','--cP'],['MD','Money demand MD (貨幣需求)','--cD'],lG],
+  chain:[['MS','Money supply MS (貨幣供給)','--cP'],['MD','Money demand MD (貨幣需求)','--cD'],['ID','Investment demand ID (投資需求)','--cMR'],['link','Link between graphs (跨圖連線)','--muted'],lG],
+  loan:[['D','Demand for loanable funds (可貸資金需求)','--cD'],['S','Supply of loanable funds (可貸資金供給)','--cS'],lG],
+  pc:[['SRPC','Short-run Phillips curve SRPC (短期菲利普曲線)','--cMC'],['LRPC','Long-run Phillips curve LRPC (長期菲利普曲線)','--cP'],lG],
+  fx:[['D','Demand for the currency (本國貨幣需求)','--cD'],['S','Supply of the currency (本國貨幣供給)','--cS'],lG]
+};
+for(const k in LINES)LINES[k].push(['dots','Points & arrows (標記點與箭頭)','--ink']);
+const oGhost=['ghost','Keep original curves (保留原曲線虛線)','--muted'];
+const OPTS={
+  free:[['letters','Point letters A, B, C (交點字母)','--ink']],
+  adas:[oGhost,['gap','Output gap arrow (產出缺口標示)','--aLoss']],
+  keyn:[oGhost,['gap','Output gap arrow (產出缺口標示)','--aLoss']],
+  money:[oGhost],chain:[oGhost],loan:[oGhost],pc:[oGhost],fx:[oGhost]
+};
+const SIGN={AD:-1,AS:1,D:-1,S:1,MD:-1,ID:-1};
+const BASEKEYS={adas:['AD','AS','yf'],keyn:['A','b'],money:['MS','MD'],chain:['MS','MD'],loan:['D','S'],fx:['D','S'],pc:['pe','un']};
+
+/* ---------- state ---------- */
+const LD={x1:5,y1:90,x2:95,y2:10},LS={x1:5,y1:10,x2:95,y2:90};
+const showOf=k=>Object.fromEntries(OPTS[k].map(o=>[o[0],true]));
+const linesOf=k=>Object.fromEntries(LINES[k].map(o=>[o[0],true]));
+const BASE={
+  free:()=>({objs:[],nid:1,tool:'line',sel:null,draft:null,yl:'PL',xl:'Y',trash:null}),
+  adas:()=>({AD:copy(LD),AS:copy(LS),yf:50}),
+  keyn:()=>({A:20,b:0.6,yf:60}),
+  money:()=>({MS:50,MD:copy(LD)}),
+  chain:()=>({MS:50,MD:copy(LD),ID:{x1:5,y1:85,x2:95,y2:5}}),
+  loan:()=>({D:copy(LD),S:copy(LS)}),
+  pc:()=>({un:5,pe:3,B:2,u:5}),
+  fx:()=>({D:copy(LD),S:copy(LS)})
+};
+const DEF={};for(const k in BASE)DEF[k]=()=>{const o=Object.assign(BASE[k](),{show:showOf(k),lines:linesOf(k),strokes:[]});
+  if(BASEKEYS[k]){o.base={};for(const b of BASEKEYS[k])o.base[b]=copy(o[b]);}return o;};
+let G={tpl:'adas',tool:'drag',pen:'k',nums:false,st:{}};
+for(const k in DEF)G.st[k]=DEF[k]();
+const KEY='macro-board-v1';
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&s.st){for(const k in DEF){const o=s.st[k]||{};G.st[k]=Object.assign(DEF[k](),o);G.st[k].show=Object.assign(showOf(k),o.show||{});G.st[k].lines=Object.assign(linesOf(k),o.lines||{});G.st[k].draft=null;}
+  G.tpl=DEF[s.tpl]?s.tpl:'adas';G.nums=!!s.nums;G.pen=s.pen||'k';}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({st:G.st,tpl:G.tpl,nums:G.nums,pen:G.pen}));}catch(e){}}
+const cur=()=>G.st[G.tpl];
+
+/* ---------- drawing helpers ---------- */
+const svg=document.getElementById('board');
+function fpath(f,q0=0,q1=FR.qmax,n=160){let d='';for(let i=0;i<=n;i++){const q=q0+(q1-q0)*i/n;const p=f(q);if(!ok(p))continue;d+=(d?'L':'M')+r1(X(q))+' '+r1(Y(cp(p)));}return d;}
+function lineD(f){let qa=0,qb=FR.qmax;const lo=-0.8*FR.pmax,hi=1.8*FR.pmax;if(Math.abs(f.s)>1e-9){const A=(lo-f.b)/f.s,Bq=(hi-f.b)/f.s;qa=Math.max(qa,Math.min(A,Bq));qb=Math.min(qb,Math.max(A,Bq));}
+  if(qb<=qa)return'';return`M${r1(X(qa))} ${r1(Y(f.P(qa)))}L${r1(X(qb))} ${r1(Y(f.P(qb)))}`;}
+const frA=fr=>fr?` data-fr="${fr}"`:'';
+function curve(d,cls,drag,key,fr){return`<g class="cv ${cls}"${drag?` data-drag="${drag}" data-key="${key}"`:''}${frA(fr)}><path class="hit" d="${d}"/><path class="stroke" d="${d}"/></g>`;}
+function handle(q,p,key,cls,fr,kind='end'){return`<g class="hd ${cls}" data-drag="${kind}" data-key="${key}"${frA(fr)}><circle class="hhit" cx="${r1(X(q))}" cy="${r1(Y(p))}" r="16"/><circle class="hdot" cx="${r1(X(q))}" cy="${r1(Y(p))}" r="6.5"/></g>`;}
+function vSolid(q,key,cls,fr,ghost){const x=r1(X(q)),d=`M${x} ${FR.y}V${FR.y+FR.h}`;return ghost?`<g class="cv ${cls} ghost"><path class="stroke" d="${d}"/></g>`:curve(d,cls,'vline',key,fr);}
+function vMarker(q,key,cls,fr){const x=r1(X(q));return`<g class="cv marker ${cls}" data-drag="vline" data-key="${key}"${frA(fr)}><path class="hit" d="M${x} ${FR.y}V${FR.y+FR.h}"/><path class="stroke" d="M${x} ${FR.y}V${FR.y+FR.h}"/><circle class="knob" cx="${x}" cy="${FR.y+7}" r="6"/></g>`;}
+function topLabel(q,text,cls,ghost,side){const L=side==='left';return`<text class="cl ${cls}${ghost?' ghost':''}" x="${r1(X(q)+(L?-7:7))}" y="${FR.y+18}" text-anchor="${L?'end':'start'}">${text}</text>`;}
+function labelAt(f,text,cls,q0=0,q1=FR.qmax,ghost){let last=null;for(let i=0;i<=200;i++){const q=q0+(q1-q0)*i/200,p=f(q);if(ok(p)&&p>=0.12*FR.pmax&&p<=0.96*FR.pmax)last=[q,p];}
+  if(!last)return'';const[q,p]=last;let x=X(q)+8,a='start';if(x>FR.x+FR.w-40){x=X(q)-10;a='end';}
+  return`<text class="cl ${cls}${ghost?' ghost':''}" x="${r1(x)}" y="${r1(Y(p)-8)}" text-anchor="${a}">${text}</text>`;}
+const inPlot=(q,p)=>ok(q)&&ok(p)&&q>=0&&q<=FR.qmax&&p>=0&&p<=FR.pmax;
+function axY(p,t){return`<text class="ax" x="${FR.x-8}" y="${r1(Y(p)+5)}" text-anchor="end">${t}${G.nums?`<tspan class="num" x="${FR.x-8}" dy="13">${f1(p)}</tspan>`:''}</text>`;}
+function axX(q,t,dy=0){return`<text class="ax" x="${r1(X(q))}" y="${FR.y+FR.h+20+dy}" text-anchor="middle">${t}${G.nums?`<tspan class="num" x="${r1(X(q))}" dy="14">${f1(q)}</tspan>`:''}</text>`;}
+function guide(q,p,o={}){if(!inPlot(q,p))return'';let s='';
+  if(!o.noY){s+=`<line class="gd" x1="${FR.x}" y1="${r1(Y(p))}" x2="${r1(X(q))}" y2="${r1(Y(p))}"/>`;if(o.pl)s+=axY(p,o.pl);}
+  if(!o.noX){s+=`<line class="gd" x1="${r1(X(q))}" y1="${r1(Y(p))}" x2="${r1(X(q))}" y2="${FR.y+FR.h}"/>`;if(o.ql)s+=axX(q,o.ql,o.qdy||0);}
+  return`<g class="ln-guide${o.faint?' faint':''}">${s}</g>`;}
+function dot(q,p,label,hollow,small,dx=8,dy=-8,anchor){if(!inPlot(q,p))return'';return`<circle class="pt${hollow?' hollow':''}" cx="${r1(X(q))}" cy="${r1(Y(p))}" r="${small?4.5:5.5}"/>`+(label?`<text class="ptl${small?' small':''}" x="${r1(X(q)+dx)}" y="${r1(Y(p)+dy)}" text-anchor="${anchor||(dx<0?'end':'start')}">${label}</text>`:'');}
+function bracket(q1,q2,p,text){const y=Y(p)-20;const a=cl(Math.min(q1,q2),0,FR.qmax),b=cl(Math.max(q1,q2),0,FR.qmax);if(!(b-a>1))return'';
+  return`<line class="br" x1="${r1(X(a)+3)}" y1="${r1(y)}" x2="${r1(X(b)-3)}" y2="${r1(y)}" marker-start="url(#ar)" marker-end="url(#ar)"/><text class="brt" x="${r1((X(a)+X(b))/2)}" y="${r1(y-8)}">${text}</text>`;}
+function axes(yt,xt){let s='';
+  for(let v=FR.gq;v<=FR.qmax+1e-9;v+=FR.gq){const x=r1(X(v));s+=`<line class="gridl" x1="${x}" y1="${FR.y}" x2="${x}" y2="${FR.y+FR.h}"/>`;}
+  for(let v=FR.gp;v<=FR.pmax+1e-9;v+=FR.gp){const y=r1(Y(v));s+=`<line class="gridl" x1="${FR.x}" y1="${y}" x2="${FR.x+FR.w}" y2="${y}"/>`;}
+  if(G.nums){for(let v=FR.tq;v<=FR.qmax+1e-9;v+=FR.tq)s+=`<text class="tick" x="${r1(X(v))}" y="${FR.y+FR.h+46}" text-anchor="middle">${v}</text>`;
+    for(let v=FR.tp;v<=FR.pmax+1e-9;v+=FR.tp)s+=`<text class="tick" x="${FR.x-40}" y="${r1(Y(v)+4)}" text-anchor="end">${v}</text>`;}
+  s+=`<path class="axis" d="M${FR.x} ${FR.y+FR.h}H${FR.x+FR.w+12}" marker-end="url(#ar)"/><path class="axis" d="M${FR.x} ${FR.y+FR.h}V${FR.y-10}" marker-end="url(#ar)"/>`;
+  s+=`<text class="axt" x="${FR.x+10}" y="${FR.y+4}">${yt}</text><text class="axt" x="${FR.x+FR.w}" y="${FR.y+FR.h+(G.nums?78:60)}" text-anchor="end">${xt}</text><text class="ax" x="${FR.x-8}" y="${FR.y+FR.h+18}" text-anchor="end">0</text>`;return s;}
+const sub=(a,b)=>`${a}<tspan font-size="12" dy="3">${b}</tspan>`;
+function noEq(lay,t){lay.tags+=`<text class="msg" x="${FR.x+14}" y="${FR.y+22}">${t||'No intersection on the graph (兩線在圖內沒有交點)'}</text>`;}
+const chg=(v,e,z)=>Math.abs(v)<0.3?`${e} unchanged (${z}不變)`:v>0?`${e} rises (${z}上升)`:`${e} falls (${z}下降)`;
+
+/* generic two-line market with a baseline for comparison */
+function twoLine(st,lay,c){const B=st.base,mD=!same(st[c.d],B[c.d]),mS=!same(st[c.s],B[c.s]),moved=st.show.ghost&&(mD||mS);let E0=null;
+  if(moved){const D0=lf(B[c.d]),S0=lf(B[c.s]);E0=inter(D0,S0);
+    if(mD){lay.ghost+=curve(lineD(D0),'cD ghost ln-'+c.d);lay.tags+=labelAt(D0.P,c.dl+'₀','cD ln-'+c.d,0,FR.qmax,true);}
+    if(mS){lay.ghost+=curve(lineD(S0),'cS ghost ln-'+c.s);lay.tags+=labelAt(S0.P,c.sl+'₀','cS ln-'+c.s,0,FR.qmax,true);}
+    if(E0&&inPlot(E0.q,E0.p)){let q0=c.qs+'₀';if(c.yf!=null&&Math.abs(E0.q-c.yf)<3)q0+=' = '+sub('Y','f');const En=inter(lf(st[c.d]),lf(st[c.s]));const close=!!En&&Math.abs(En.q-E0.q)<12*FR.qmax/100;lay.guides+=guide(E0.q,E0.p,{pl:c.ps+'₀',ql:q0,faint:true,qdy:close?17:0});lay.points+=dot(E0.q,E0.p,'E₀',true,true,-8,-8);}else E0=null;}
+  const D=lf(st[c.d]),S=lf(st[c.s]);
+  lay.curves+=curve(lineD(D),'cD ln-'+c.d,'line',c.d)+curve(lineD(S),'cS ln-'+c.s,'line',c.s);
+  lay.tags+=labelAt(D.P,moved&&mD?c.dl+'₁':c.dl,'cD ln-'+c.d)+labelAt(S.P,moved&&mS?c.sl+'₁':c.sl,'cS ln-'+c.s);
+  for(const k of[c.d,c.s]){const cls=(k===c.d?'cD':'cS')+' ln-'+k;lay.handles+=handle(st[k].x1,st[k].y1,k+':1',cls)+handle(st[k].x2,st[k].y2,k+':2',cls);}
+  let E=inter(D,S);if(!(E&&inPlot(E.q,E.p)&&E.q>0&&E.p>0)){noEq(lay);E=null;}
+  else{let ql=moved?c.qs+'₁':c.qs+'*';if(c.yf!=null&&Math.abs(E.q-c.yf)<3)ql+=' = '+sub('Y','f');
+    lay.guides+=guide(E.q,E.p,{pl:moved?c.ps+'₁':c.ps+'*',ql});lay.points+=dot(E.q,E.p,moved?'E₁':'E');}
+  return{D,S,E,E0,moved};}
+
+/* ---------- templates ---------- */
+const TPL={};
+TPL.adas=function(st,lay){const yf=st.yf,B=st.base,rows=[];
+  const lrasMoved=st.show.ghost&&Math.abs(yf-B.yf)>0.3;
+  if(lrasMoved){lay.ghost+=vSolid(B.yf,'','cP ln-LRAS',null,true);lay.tags+=`<g class="ln-LRAS">${topLabel(B.yf,'LRAS₀','cP',true,B.yf<yf?'left':'right')}</g>`;}
+  lay.curves+=vSolid(yf,'yf','cP ln-LRAS');lay.tags+=`<g class="ln-LRAS">${topLabel(yf,lrasMoved?'LRAS₁':'LRAS','cP')}</g>`;
+  const r=twoLine(st,lay,{d:'AD',s:'AS',dl:'AD',sl:'SRAS',ps:'PL',qs:'Y',yf});
+  if(!(r.E&&Math.abs(r.E.q-yf)<3)&&!(r.E0&&Math.abs(r.E0.q-yf)<3))lay.tags+=`<g class="ln-LRAS">${axX(yf,sub('Y','f'))}</g>`;
+  if(!r.E)return{rows,status:null,yt:'PL (物價水準)',xt:'Real GDP (實質 GDP)'};
+  const gap=r.E.q-yf;let status;
+  if(st.show.gap&&Math.abs(gap)>0.5)lay.tags+=`<g class="ln-dots">${bracket(r.E.q,yf,7,gap<0?'Recessionary gap (衰退缺口)':'Inflationary gap (膨脹缺口)')}</g>`;
+  if(gap<-0.5)status={c:'bad',t:'Recessionary gap: Y < Yf, unemployment above the natural rate (衰退缺口：失業率高於自然失業率)'};
+  else if(gap>0.5)status={c:'warn',t:'Inflationary gap: Y > Yf, unemployment below the natural rate (膨脹缺口：失業率低於自然失業率)'};
+  else status={c:'good',t:'Long-run equilibrium: Y = Yf, full employment (長期均衡：充分就業)'};
+  rows.push(['Price level PL* (物價水準)',f1(r.E.p),'em'],['Real GDP Y* (實質 GDP)',f1(r.E.q),'em'],['Potential output Yf (潛在產出)',f1(yf)],['Output gap Y* − Yf (產出缺口)',sg1(gap),'em']);
+  if(r.E0)rows.push('-',['Original PL₀ / Y₀ (原均衡)',f1(r.E0.p)+' / '+f1(r.E0.q)],['Change in price level ΔPL (物價變動)',sg1(r.E.p-r.E0.p)],['Change in real GDP ΔY (產出變動)',sg1(r.E.q-r.E0.q)]);
+  if(r.E0)status={c:status.c,t:chg(r.E.p-r.E0.p,'PL','物價')+', '+chg(r.E.q-r.E0.q,'Y','產出')+' · '+status.t};
+  return{rows,status,yt:'PL (物價水準)',xt:'Real GDP (實質 GDP)'};
+};
+TPL.keyn=function(st,lay){const A=st.A,b=st.b,B=st.base,rows=[];
+  const ae=lin(b,A),moved=st.show.ghost&&(Math.abs(A-B.A)>0.05||Math.abs(b-B.b)>0.002);
+  lay.curves+=curve(lineD(lin(1,0)),'cP thin ln-d45');lay.tags+=`<text class="cl cP sm ln-d45" x="${r1(X(88))}" y="${r1(Y(96))}" text-anchor="end">45° (AE = Y)</text>`;
+  let Y0=NaN;
+  if(moved){const ae0=lin(B.b,B.A);Y0=B.A/(1-B.b);lay.ghost+=curve(lineD(ae0),'cD ghost ln-AE');lay.tags+=labelAt(ae0.P,'AE₀','cD ln-AE',0,100,true);
+    if(inPlot(Y0,Y0)){lay.guides+=guide(Y0,Y0,{ql:'Y₀',faint:true});lay.points+=dot(Y0,Y0,'E₀',true,true,-8,-8);}}
+  lay.curves+=curve(lineD(ae),'cD ln-AE','aeb','A');
+  const qh=Math.min(80,(92-A)/b);lay.handles+=handle(qh,ae.P(qh),'b','cD ln-AE',null,'aes');
+  lay.tags+=`<text class="cl cD ln-AE" x="${r1(X(qh)-12)}" y="${r1(Y(ae.P(qh))-12)}" text-anchor="end">${moved?'AE₁':'AE = C + I + G + NX'}</text>`;
+  const Ys=A/(1-b),k=1/(1-b),yf=st.yf;
+  lay.curves+=vMarker(yf,'yf','cP ln-yf');
+  if(!(inPlot(Ys,Ys))){noEq(lay,'Equilibrium is off the graph; lower AE (均衡點超出圖面，請把 AE 往下拉)');}
+  else{let ql=moved?'Y₁':'Y*';if(Math.abs(Ys-yf)<3)ql+=' = '+sub('Y','f');lay.guides+=guide(Ys,Ys,{pl:'AE*',ql});lay.points+=dot(Ys,Ys,moved?'E₁':'E',false,false,10,14);}
+  if(!(inPlot(Ys,Ys)&&Math.abs(Ys-yf)<3))lay.tags+=`<g class="ln-yf">${axX(yf,sub('Y','f'))}</g>`;
+  const gap=Ys-yf;
+  if(st.show.gap&&inPlot(Ys,Ys)&&Math.abs(gap)>0.5)lay.tags+=`<g class="ln-dots">${bracket(Ys,yf,7,gap<0?'Recessionary gap (衰退缺口)':'Inflationary gap (膨脹缺口)')}</g>`;
+  const status=gap<-0.5?{c:'bad',t:'Recessionary gap: raise spending by gap ÷ multiplier (衰退缺口：支出需增加 缺口 ÷ 乘數)'}:gap>0.5?{c:'warn',t:'Inflationary gap: cut spending by gap ÷ multiplier (膨脹缺口：支出需減少 缺口 ÷ 乘數)'}:{c:'good',t:'Equilibrium at potential output (均衡產出等於潛在產出)'};
+  rows.push(['Autonomous spending A (自發性支出)',f1(A),'em'],['MPC (邊際消費傾向)',f2(b),'em'],['MPS = 1 − MPC (邊際儲蓄傾向)',f2(1-b)],['Spending multiplier 1 / MPS (支出乘數)',f2(k),'em'],'-',
+    ['Equilibrium output Y* (均衡產出)',f1(Ys),'em'],['Potential output Yf (潛在產出)',f1(yf)],['Output gap Y* − Yf (產出缺口)',sg1(gap)],['Spending change to close gap (補足缺口所需支出變動)',sg1(-gap/k)]);
+  if(moved)rows.push('-',['Change in A, ΔA (自發性支出變動)',sg1(A-B.A)],['Change in output ΔY (產出變動)',sg1(Ys-Y0)],
+    Math.abs(b-B.b)<0.002?['Check: ΔY = k × ΔA (乘數驗算)',f1(k*(A-B.A))]:['MPC changed (MPC 已改變)',f2(B.b)+' → '+f2(b)]);
+  return{rows,status,yt:'AE (總支出)',xt:'Real GDP Y (實質 GDP)'};
+};
+function moneyPanel(st,lay,fr){const B=st.base,mMS=Math.abs(st.MS-B.MS)>0.3,mMD=!same(st.MD,B.MD),moved=st.show.ghost&&(mMS||mMD);let i0=NaN,M0=B.MS;
+  if(moved){const MD0=lf(B.MD);i0=MD0.P(B.MS);
+    if(mMD){lay.ghost+=curve(lineD(MD0),'cD ghost ln-MD');lay.tags+=labelAt(MD0.P,'MD₀','cD ln-MD',0,100,true);}
+    if(mMS){lay.ghost+=vSolid(B.MS,'','cP ln-MS',null,true);lay.tags+=`<g class="ln-MS">${topLabel(B.MS,'MS₀','cP',true,B.MS<st.MS?'left':'right')}</g>`;}
+    if(inPlot(M0,i0)){lay.guides+=guide(M0,i0,{pl:'i₀',ql:'M₀',faint:true});lay.points+=dot(M0,i0,'E₀',true,true,-8,-8);}}
+  const MD=lf(st.MD);
+  lay.curves+=vSolid(st.MS,'MS','cP ln-MS',fr)+curve(lineD(MD),'cD ln-MD','line','MD',fr);
+  lay.tags+=`<g class="ln-MS">${topLabel(st.MS,moved&&mMS?'MS₁':'MS','cP')}</g>`+labelAt(MD.P,moved&&mMD?'MD₁':'MD','cD ln-MD');
+  lay.handles+=handle(st.MD.x1,st.MD.y1,'MD:1','cD ln-MD',fr)+handle(st.MD.x2,st.MD.y2,'MD:2','cD ln-MD',fr);
+  const i=MD.P(st.MS);
+  if(inPlot(st.MS,i)){lay.guides+=guide(st.MS,i,{pl:moved?'i₁':'i*',ql:moved?'M₁':'M*'});lay.points+=dot(st.MS,i,moved?'E₁':'E');}
+  else noEq(lay,'Interest rate is off the graph (利率超出圖面)');
+  return{i,i0:moved?i0:NaN,moved};}
+function policyText(di){return di<-0.3?{c:'good',t:'MS ↑ → i ↓ → I ↑ → AD ↑ (擴張性貨幣政策)'}:di>0.3?{c:'warn',t:'MS ↓ → i ↑ → I ↓ → AD ↓ (緊縮性貨幣政策)'}:null;}
+TPL.money=function(st,lay){const rows=[];const r=moneyPanel(st,lay,null);let status=null;
+  rows.push(['Money supply MS (貨幣供給)',f1(st.MS),'em'],['Nominal interest rate i* (名目利率)',f1(r.i),'em']);
+  if(ok(r.i0)){const di=r.i-r.i0;rows.push('-',['Original i₀ (原利率)',f1(r.i0)],['Change in interest rate Δi (利率變動)',sg1(di)]);
+    status=Math.abs(st.MS-st.base.MS)>0.3&&same(st.MD,st.base.MD)?(di<-0.3?{c:'good',t:'MS ↑ → i ↓ (擴張性貨幣政策)'}:{c:'warn',t:'MS ↓ → i ↑ (緊縮性貨幣政策)'}):{c:'neutral',t:chg(di,'i','利率')};}
+  return{rows,status,yt:'i (名目利率)',xt:'Quantity of money M (貨幣數量)'};
+};
+TPL.chain=function(st,lay){const rows=[];FR=FRAMES.mL;const r=moneyPanel(st,lay,'mL');
+  const xL=X(st.MS);FR=FRAMES.mR;const ID=lf(st.ID);
+  lay.extra+=curve(lineD(ID),'cMR ln-ID','line','ID','mR');lay.tags+=labelAt(ID.P,'ID','cMR ln-ID');
+  lay.handles+=handle(st.ID.x1,st.ID.y1,'ID:1','cMR ln-ID','mR')+handle(st.ID.x2,st.ID.y2,'ID:2','cMR ln-ID','mR');
+  const I=ID.Q(r.i);let I0=NaN;
+  const link=(i,q,faint)=>inPlot(q,i)?`<line class="gd${faint?' faint':''}" x1="${r1(xL)}" y1="${r1(Y(i))}" x2="${r1(X(q))}" y2="${r1(Y(i))}"/>`:'';
+  if(ok(r.i0)){I0=ID.Q(r.i0);const xL0=(FR=FRAMES.mL,X(st.base.MS));FR=FRAMES.mR;
+    if(inPlot(I0,r.i0)){lay.guides+=`<g class="ln-link faint"><line class="gd" x1="${r1(xL0)}" y1="${r1(Y(r.i0))}" x2="${r1(X(I0))}" y2="${r1(Y(r.i0))}"/></g>`+guide(I0,r.i0,{noY:true,ql:'I₀',faint:true});lay.points+=dot(I0,r.i0,'',true,true);}}
+  if(inPlot(I,r.i)){lay.guides+=`<g class="ln-link">${link(r.i,I)}</g>`+guide(I,r.i,{noY:true,ql:ok(r.i0)?'I₁':'I*'});lay.points+=dot(I,r.i,'');}
+  else noEq(lay,'Off the graph (超出圖面)');
+  let status=null;
+  rows.push(['Money supply MS (貨幣供給)',f1(st.MS),'em'],['Interest rate i (利率)',f1(r.i),'em'],['Investment I (投資)',f1(I),'em']);
+  if(ok(r.i0)){rows.push('-',['Change in interest rate Δi (利率變動)',sg1(r.i-r.i0)],['Change in investment ΔI (投資變動)',sg1(I-I0)]);status=policyText(r.i-r.i0)||{c:'neutral',t:chg(r.i-r.i0,'i','利率')};}
+  return{rows,status,axes:[{fr:'mL',yt:'i (利率)',xt:'M'},{fr:'mR',yt:'i (利率)',xt:'I (投資)'}],clipB:'mR'};
+};
+function marketTpl(c){return function(st,lay){const rows=[];const r=twoLine(st,lay,c);let status=null;
+  if(!r.E)return{rows,status,yt:c.yt,xt:c.xt};
+  rows.push([c.pName,f1(r.E.p),'em'],[c.qName,f1(r.E.q),'em']);
+  if(r.E0){const dp=r.E.p-r.E0.p,dq=r.E.q-r.E0.q;rows.push('-',['Original '+c.ps+'₀ / '+c.qs+'₀ (原均衡)',f1(r.E0.p)+' / '+f1(r.E0.q)],['Change Δ'+c.ps+' (變動)',sg1(dp)],['Change Δ'+c.qs+' (變動)',sg1(dq)]);
+    status=c.status?c.status(dp,dq):{c:'neutral',t:chg(dp,c.ps,c.pz)+', '+chg(dq,c.qs,c.qz)};}
+  return{rows,status,yt:c.yt,xt:c.xt};};}
+TPL.loan=marketTpl({d:'D',s:'S',dl:sub('D','LF'),sl:sub('S','LF'),ps:'r',qs:'Q',pz:'實質利率',qz:'資金數量',
+  yt:'r (實質利率)',xt:'Quantity of loanable funds (可貸資金數量)',pName:'Real interest rate r* (實質利率)',qName:'Quantity of loanable funds Q* (可貸資金數量)',
+  status:(dp,dq)=>({c:dp>0.3?'warn':dp<-0.3?'good':'neutral',t:chg(dp,'r','實質利率')+', '+chg(dq,'Q','資金數量')+(dp>0.3?' · Higher r can crowd out private investment (利率上升可能排擠民間投資)':'')})});
+TPL.fx=marketTpl({d:'D',s:'S',dl:'D',sl:'S',ps:'e',qs:'Q',pz:'匯率',qz:'數量',
+  yt:'e (匯率：外幣 / 本國貨幣)',xt:'Quantity of domestic currency (本國貨幣數量)',pName:'Exchange rate e* (匯率)',qName:'Quantity Q* (數量)',
+  status:(dp)=>Math.abs(dp)<0.3?{c:'neutral',t:'Exchange rate unchanged (匯率不變)'}:dp>0?{c:'good',t:'e rises: domestic currency appreciates (本國貨幣升值)'}:{c:'warn',t:'e falls: domestic currency depreciates (本國貨幣貶值)'}});
+TPL.pc=function(st,lay){const B=st.base,rows=[];const srpc=(un,pe)=>u=>pe+st.B*(un/u-1);
+  const SR=srpc(st.un,st.pe),moved=st.show.ghost&&(Math.abs(st.pe-B.pe)>0.05||Math.abs(st.un-B.un)>0.05);
+  if(moved){const S0=srpc(B.un,B.pe);lay.ghost+=curve(fpath(S0,0.8,12),'cMC ghost ln-SRPC');lay.tags+=labelAt(S0,'SRPC₀','cMC ln-SRPC',0.8,12,true);
+    if(Math.abs(st.un-B.un)>0.05){lay.ghost+=vSolid(B.un,'','cP ln-LRPC',null,true);lay.tags+=`<g class="ln-LRPC">${topLabel(B.un,'LRPC₀','cP',true,B.un<st.un?'left':'right')}</g>`;}}
+  lay.curves+=curve(fpath(SR,0.8,12),'cMC ln-SRPC','pcshift','pe')+vSolid(st.un,'un','cP ln-LRPC');
+  lay.tags+=labelAt(SR,moved?'SRPC₁':'SRPC','cMC ln-SRPC',0.8,12)+`<g class="ln-LRPC">${topLabel(st.un,'LRPC','cP')}</g>`;
+  const u=st.u,pi=SR(u);
+  if(inPlot(u,pi)){let ql='u';if(Math.abs(u-st.un)<0.3)ql='u = '+sub('u','n');lay.guides+=guide(u,pi,{pl:'π',ql});lay.handles+=handle(u,pi,'u','cMC ln-SRPC',null,'pcu');}
+  else noEq(lay,'Point is off the graph; drag it back (點超出圖面，請拖回)');
+  if(!(Math.abs(u-st.un)<0.3))lay.tags+=`<g class="ln-LRPC">${axX(st.un,sub('u','n'))}</g>`;
+  lay.guides+=`<g class="ln-guide faint">${inPlot(0.1,st.pe)?`<line class="gd" x1="${FR.x}" y1="${r1(Y(st.pe))}" x2="${r1(X(st.un))}" y2="${r1(Y(st.pe))}"/>`+axY(st.pe,sub('π','e')):''}</g>`;
+  const du=u-st.un,dpi=pi-st.pe;
+  const status=Math.abs(du)<0.05?{c:'good',t:'u = natural rate, inflation = expected (位於長期均衡：失業率等於自然失業率)'}:du<0?{c:'warn',t:'u below natural rate, inflation above expected (失業率低於自然率，通膨高於預期)'}:{c:'bad',t:'u above natural rate, inflation below expected (失業率高於自然率，通膨低於預期)'};
+  rows.push(['Unemployment rate u (失業率 %)',f1(u),'em'],['Inflation rate π (通膨率 %)',f1(pi),'em'],['Natural rate un (自然失業率 %)',f1(st.un)],['Expected inflation πe (預期通膨 %)',f1(st.pe)],'-',
+    ['u − un (失業率缺口)',sg1(du)],['π − πe (非預期通膨)',sg1(dpi)]);
+  return{rows,status,yt:'π (通膨率 %)',xt:'u (失業率 %)'};
+};
+
+/* ---------- free draw (polyline based) ---------- */
+const FCOL={AD:'cD',SRAS:'cS',AS:'cS',LRAS:'cP',AE:'cD','45°':'cP',MS:'cP',MD:'cD',D:'cD',S:'cS',ID:'cMR',SRPC:'cMC',LRPC:'cP',PPC:'cATC'};
+const PAL=['cD','cS','cMC','cATC','cAVC','cMR','cP'];
+const QL=['AD','SRAS','LRAS','AE','45°','MS','MD','D','S','ID','SRPC','LRPC','PPC'];
+const FT=[['select','Select / move (選取移動)'],['line','Line (直線)'],['curve','Convex curve (凸向原點)'],['ppc','Concave curve (凹向原點)']];
+function autoLabel(st,type){const used=new Set(st.objs.map(o=>o.label));const pool=type==='line'?['AD','SRAS','LRAS']:type==='curve'?['SRPC']:['PPC'];return pool.find(l=>!used.has(l))||'';}
+function ctrlPt(o){const mx=(o.x1+o.x2)/2,my=(o.y1+o.y2)/2,dx=o.x2-o.x1,dy=o.y2-o.y1,L=Math.hypot(dx,dy)||1;return[mx-dy/L*o.bow*L,my+dx/L*o.bow*L];}
+function poly(o){if(o.type==='line')return[[o.x1,o.y1],[o.x2,o.y2]];const[cx,cy]=ctrlPt(o),P=[];for(let i=0;i<=48;i++){const t=i/48,a=(1-t)*(1-t),b=2*t*(1-t),c=t*t;P.push([a*o.x1+b*cx+c*o.x2,a*o.y1+b*cy+c*o.y2]);}return P;}
+function defaultBow(o){const tmp=Object.assign({},o,{bow:0.22});const[c1x,c1y]=ctrlPt(tmp);const tmp2=Object.assign({},o,{bow:-0.22});const[c2x,c2y]=ctrlPt(tmp2);
+  const d1=Math.hypot(c1x,c1y),d2=Math.hypot(c2x,c2y);const toward=d1<d2?0.22:-0.22;return o.type==='curve'?toward:-toward;}
+function segX(a,b,c,d){const r=[b[0]-a[0],b[1]-a[1]],s=[d[0]-c[0],d[1]-c[1]],den=r[0]*s[1]-r[1]*s[0];if(Math.abs(den)<1e-12)return null;
+  const t=((c[0]-a[0])*s[1]-(c[1]-a[1])*s[0])/den,u=((c[0]-a[0])*r[1]-(c[1]-a[1])*r[0])/den;if(t<-1e-9||t>1+1e-9||u<-1e-9||u>1+1e-9)return null;return{q:a[0]+t*r[0],p:a[1]+t*r[1]};}
+function polyX(A,B){const out=[];for(let i=0;i<A.length-1;i++)for(let j=0;j<B.length-1;j++){const x=segX(A[i],A[i+1],B[j],B[j+1]);if(x)out.push(x);}return out;}
+function snapEnd(o,i,q,p){const j=i==='1'?'2':'1',ox=o['x'+j],oy=o['y'+j],dx=q-ox,dy=p-oy;
+  if(o.type==='line'){if(Math.abs(dy)<0.08*Math.abs(dx))p=oy;else if(Math.abs(dx)<0.08*Math.abs(dy))q=ox;}o['x'+i]=q;o['y'+i]=p;}
+function fHandle(o,part,q,p){return`<g class="hd ${o.color}" data-fo="${o.id}" data-part="${part}"><circle class="hhit" cx="${r1(X(q))}" cy="${r1(Y(p))}" r="16"/><circle class="hdot" cx="${r1(X(q))}" cy="${r1(Y(p))}" r="6.5"/></g>`;}
+TPL.free=function(st,lay){const rows=[],objs=st.objs.slice();if(st.draft)objs.push(st.draft);
+  const ysym=(st.yl.trim().split(/[ ,，、(（]/)[0]||'P').slice(0,3),xsym=(st.xl.trim().split(/[ ,，、(（]/)[0]||'Q').slice(0,3);
+  if(!objs.length)lay.tags+=`<text class="empty" x="${FR.x+FR.w/2}" y="${FR.y+FR.h/2-10}" text-anchor="middle">Pick a tool on the right, then drag on the board.</text><text class="empty" x="${FR.x+FR.w/2}" y="${FR.y+FR.h/2+14}" text-anchor="middle">（在右側選工具，然後在畫布上拖曳）</text>`;
+  for(const o of objs){const sel=o.id===st.sel&&o!==st.draft,P=poly(o);
+    const d=P.map((p,i)=>(i?'L':'M')+r1(X(p[0]))+' '+r1(Y(p[1]))).join('');
+    lay.curves+=`<g class="cv ${o.color}${sel?' sel':''}" data-fo="${o.id}" data-part="body"><path class="hit" d="${d}"/><path class="stroke" d="${d}"/></g>`;
+    if(o.label){const e=(o.x2>o.x1+0.5||(Math.abs(o.x2-o.x1)<=0.5&&o.y2>o.y1))?[o.x2,o.y2]:[o.x1,o.y1];let x=X(e[0])+8,a='start';if(x>FR.x+FR.w-30){x=X(e[0])-8;a='end';}
+      lay.tags+=`<text class="cl ${o.color}" x="${r1(x)}" y="${r1(Math.max(FR.y+14,Y(e[1])-8))}" text-anchor="${a}">${escH(o.label)}</text>`;}
+    if(sel&&st.tool==='select'){lay.handles+=fHandle(o,'p1',o.x1,o.y1)+fHandle(o,'p2',o.x2,o.y2);if(o.type!=='line'){const m=P[24];lay.handles+=fHandle(o,'bow',m[0],m[1]);}}}
+  let pts=[];const ps=st.objs.map(o=>({o,P:poly(o)}));
+  for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++)for(const x of polyX(ps[i].P,ps[j].P))if(inPlot(x.q,x.p))pts.push({q:x.q,p:x.p,a:ps[i].o,b:ps[j].o});
+  pts.sort((u,v)=>u.q-v.q);const uniq=[];for(const p of pts)if(!uniq.some(u=>Math.abs(u.q-p.q)<1.2&&Math.abs(u.p-p.p)<1.2))uniq.push(p);
+  const usedY=[],usedX=[];const nm=o=>o.label||(o.type==='line'?'line (線)':'curve (曲線)');
+  uniq.forEach((p,i)=>{const Lt=String.fromCharCode(65+(i%26)),lt=st.show.letters;
+    const okY=!usedY.some(v=>Math.abs(v-p.p)<4),okX=!usedX.some(v=>Math.abs(v-p.q)<5);if(okY)usedY.push(p.p);if(okX)usedX.push(p.q);
+    lay.guides+=guide(p.q,p.p,{pl:lt&&okY?sub(escH(ysym),Lt):'',ql:lt&&okX?sub(escH(xsym),Lt):''});lay.points+=dot(p.q,p.p,lt?Lt:'',false,false,8,-8);
+    rows.push([`${lt?Lt+': ':''}${nm(p.a)} × ${nm(p.b)}`,`(${f1(p.q)}, ${f1(p.p)})`]);});
+  const head=[['Lines drawn (已畫線數)',String(st.objs.length),'em'],['Intersections (交點數)',String(uniq.length),'em']];if(rows.length)head.push('-');
+  return{rows:head.concat(rows),status:null,yt:escH(st.yl),xt:escH(st.xl)};
+};
+
+/* ---------- side panel ---------- */
+const HINTS={
+  free:['Pick a tool, then drag on the board. <b>Line:</b> drag from start to end; nearly flat or upright lines snap straight (good for LRAS and MS). <b>Curves:</b> drag from one end to the other; select it later to adjust the bend with the middle dot. Intersections and dashed lines appear by themselves.','選好工具後在畫布上拖曳。<b>直線：</b>從起點拖到終點，接近水平或垂直時會自動拉直（畫 LRAS、MS 很方便）。<b>曲線：</b>從一端拖到另一端；之後用「選取移動」點它，拖中間的圓點可調整彎曲程度。交點和虛線會自動出現。'],
+  adas:['<b>Drag the middle</b> of AD or SRAS to shift it; <b>drag a dot</b> to change its slope. <b>Drag LRAS</b> left or right to change potential output. The original curves stay as dashed lines for comparison.','<b>拖 AD 或 SRAS 中段</b>整條平移，<b>拖圓點</b>改斜率；<b>左右拖 LRAS</b> 改變潛在產出。原曲線會留成虛線，方便比較 E₀ 與 E₁；按「Set as new baseline」可接著做下一次變動，例如示範長期自我調整。'],
+  keyn:['<b>Drag AE up or down</b> to change autonomous spending; <b>drag the dot on AE</b> to change the MPC. Drag the dotted Yf marker to set potential output. The values panel checks ΔY = multiplier × ΔA.','<b>上下拖 AE 線</b>改變自發性支出，<b>拖 AE 上的圓點</b>改變 MPC（斜率）。拖點狀 Yf 標記線設定潛在產出。數值區會驗算 ΔY = 乘數 × ΔA，並算出補足缺口所需的支出變動。'],
+  money:['<b>Drag MS left or right</b> for open market operations; <b>drag MD</b> to show changes in money demand.','<b>左右拖 MS</b> 示範公開市場操作（買債券 → MS 右移）；<b>拖 MD</b> 示範貨幣需求變動（例如物價或所得上升 → MD 右移）。'],
+  chain:['<b>Drag MS</b> in the left graph; the new interest rate carries across to the investment demand curve on the right.','<b>拖左圖的 MS</b>，新的利率會沿著虛線帶到右圖的投資需求線，直接看到 MS → i → I 的傳遞過程。右圖的 ID 也可以拖。'],
+  loan:['<b>Drag D or S.</b> Government borrowing shifts D right, which raises r and can crowd out private investment. More saving shifts S right.','<b>拖 D 或 S。</b>政府赤字增加借款 → 需求 D 右移 → 實質利率上升，可能排擠民間投資；民間儲蓄增加 → 供給 S 右移。'],
+  pc:['<b>Drag the dot</b> along SRPC to move the economy. <b>Drag SRPC up or down</b> to change expected inflation; <b>drag LRPC</b> to change the natural rate of unemployment.','<b>沿著 SRPC 拖圓點</b>，移動經濟所在位置。<b>上下拖 SRPC</b> 改變預期通膨（例如通膨預期上升 → SRPC 上移）；<b>左右拖 LRPC</b> 改變自然失業率。'],
+  fx:['<b>Drag D or S</b> for the domestic currency. e is foreign currency per unit of domestic currency, so a higher e means appreciation.','<b>拖 D 或 S。</b>e 是「每一單位本國貨幣可換多少外幣」，所以 e 上升代表本國貨幣升值。例如外國人增加購買本國商品 → 本國貨幣需求 D 右移 → 升值。']
+};
+const ctrl=document.getElementById('ctrl'),ro=document.getElementById('ro'),hint=document.getElementById('hint');
+function buildCtrl(){const st=cur();let h='';
+  if(G.tpl==='free'){const o=st.objs.find(x=>x.id===st.sel);
+    h+=`<div class="sec"><h2>DRAW TOOLS (作圖工具)</h2><div class="seg" role="group" aria-label="Draw tool (作圖工具)">${FT.map(([k,t])=>`<button data-ftool="${k}" aria-pressed="${st.tool===k}">${t}</button>`).join('')}</div></div>`;
+    h+='<div class="sec"><h2>SELECTED LINE (選取的線)</h2>'+(o?`<label class="fl">Name (名稱)<input type="text" id="flabel" data-fl="1" value="${escA(o.label)}" maxlength="16"></label><div class="chips">${QL.map(l=>`<button data-ql="${escA(l)}">${escH(l)}</button>`).join('')}</div><div class="chips">${PAL.map(c=>`<button class="swc ${c}" data-fc="${c}" aria-pressed="${o.color===c}" aria-label="Color (顏色)"></button>`).join('')}</div><div class="acts"><button data-fdel="1">Delete line (刪除這條線)</button></div>`
+      :'<p class="hint">Choose “Select / move”, then click a line to rename, recolor or delete it.<span class="zh">用「選取移動」點一條線，就能改名稱、顏色或刪除。</span></p>')+'</div>';
+    h+=`<div class="sec"><h2>AXIS NAMES (座標軸名稱)</h2><div class="axin"><label>Y <input type="text" id="fy" data-ax="yl" value="${escA(st.yl)}" maxlength="14"></label><label>X <input type="text" id="fx" data-ax="xl" value="${escA(st.xl)}" maxlength="14"></label></div></div>`;}
+  const allBtns=g=>`<div class="mini"><button data-all="${g}" data-val="1">Select all (全選)</button><button data-all="${g}" data-val="0">Clear all (取消全選)</button></div>`;
+  h+='<div class="sec"><div class="sh"><h2>CURVES (曲線)</h2>'+allBtns('lines')+'</div><div class="layers">'+LINES[G.tpl].map(([k,t,c])=>`<label><input type="checkbox" id="ln-${G.tpl}-${k}" data-line="${k}"${st.lines[k]!==false?' checked':''}><span class="${k==='dots'?'chipd':'chipl'}" style="${k==='dots'?'background':'border-color'}:var(${c})"></span>${t}</label>`).join('')+'</div></div>';
+  if(OPTS[G.tpl].length)h+='<div class="sec"><div class="sh"><h2>SHADING &amp; MARKS (區塊與標記)</h2>'+allBtns('show')+'</div><div class="layers">'+OPTS[G.tpl].map(([k,t,c])=>`<label><input type="checkbox" id="op-${G.tpl}-${k}" data-show="${k}"${st.show[k]?' checked':''}><span class="chipc" style="background:var(${c})"></span>${t}</label>`).join('')+'</div></div>';
+  if(G.tpl==='free')h+='<div class="acts"><button data-act="fclear">Clear canvas (清空畫布)</button>'+(st.trash?'<button data-act="fundo">Undo clear (復原清空)</button>':'')+'</div>';
+  else h+='<div class="acts">'+(BASEKEYS[G.tpl]?'<button data-act="base">Set as new baseline (以目前為新基準)</button>':'')+'<button data-act="reset">Reset this graph (重設此圖)</button></div>';
+  ctrl.innerHTML=h;hint.innerHTML=HINTS[G.tpl][0]+'<span class="zh">'+HINTS[G.tpl][1]+'</span>';
+  document.querySelectorAll('.tabs button[data-tpl]').forEach(b=>b.setAttribute('aria-selected',b.dataset.tpl===G.tpl));
+}
+ctrl.addEventListener('change',e=>{const st=cur(),d=e.target.dataset;if(d.show)st.show[d.show]=e.target.checked;else if(d.line)st.lines[d.line]=e.target.checked;else return;render();save();});
+ctrl.addEventListener('input',e=>{const st=cur(),d=e.target.dataset;
+  if(d.fl){const o=st.objs.find(x=>x.id===st.sel);if(o){o.label=e.target.value;render();save();}}
+  else if(d.ax){st[d.ax]=e.target.value;render();save();}});
+document.addEventListener('keydown',e=>{if(G.tpl!=='free'||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;const st=cur();
+  if((e.key==='Delete'||e.key==='Backspace')&&st.sel!=null){st.objs=st.objs.filter(x=>x.id!==st.sel);st.sel=null;e.preventDefault();buildCtrl();render();save();}});
+ctrl.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const st=cur();
+  if(b.dataset.act==='reset'){G.st[G.tpl]=DEF[G.tpl]();buildCtrl();}
+  if(b.dataset.act==='base'){st.base={};for(const k of BASEKEYS[G.tpl])st.base[k]=copy(st[k]);}
+  if(b.dataset.ftool){st.tool=b.dataset.ftool;buildCtrl();}
+  if(b.dataset.ql||b.dataset.fc||b.dataset.fdel){const o=st.objs.find(x=>x.id===st.sel);if(o){
+    if(b.dataset.ql){o.label=b.dataset.ql;if(FCOL[o.label])o.color=FCOL[o.label];}
+    if(b.dataset.fc)o.color=b.dataset.fc;
+    if(b.dataset.fdel){st.objs=st.objs.filter(x=>x!==o);st.sel=null;}}buildCtrl();}
+  if(b.dataset.act==='fclear'){if(st.objs.length||st.strokes.length)st.trash={objs:st.objs,strokes:st.strokes};st.objs=[];st.strokes=[];st.sel=null;buildCtrl();}
+  if(b.dataset.act==='fundo'&&st.trash){st.objs=st.trash.objs.concat(st.objs);st.strokes=st.trash.strokes.concat(st.strokes);st.trash=null;buildCtrl();}
+  if(b.dataset.all){const v=b.dataset.val==='1',obj=b.dataset.all==='lines'?st.lines:st.show,list=b.dataset.all==='lines'?LINES[G.tpl]:OPTS[G.tpl];for(const o of list)obj[o[0]]=v;buildCtrl();}
+  render();save();});
+document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-tpl]');if(!b)return;G.tpl=b.dataset.tpl;buildCtrl();render();save();});
+
+/* ---------- render ---------- */
+function render(){const st=cur();const lay={areas:'',ghost:'',curves:'',guides:'',points:'',tags:'',handles:'',extra:''};
+  const fr0=FRM[G.tpl]||'main';FR=FRAMES[fr0];
+  const out=TPL[G.tpl](st,lay);
+  svg.classList.toggle('pen',G.tool==='pen'||(G.tpl==='free'&&st.tool!=='select'));
+  const axList=out.axes||[{fr:fr0,yt:out.yt,xt:out.xt}];
+  let ax='';for(const a of axList){FR=FRAMES[a.fr];ax+=axes(a.yt,a.xt);}
+  const A=FRAMES[axList[0].fr],Bf=out.clipB?FRAMES[out.clipB]:null;
+  const hid=LINES[G.tpl].map(x=>x[0]).filter(id=>st.lines[id]===false).map(id=>'#board .ln-'+id).join(',');
+  const ink=(st.strokes||[]).map(s=>`<path class="ink ${s.c}" d="${s.p.map((p,i)=>(i?'L':'M')+p[0]+' '+p[1]).join('')}"/>`).join('');
+  svg.innerHTML=`<defs><clipPath id="cpA"><rect x="${A.x}" y="${A.y}" width="${A.w}" height="${A.h}"/></clipPath>`+(Bf?`<clipPath id="cpB"><rect x="${Bf.x}" y="${Bf.y}" width="${Bf.w}" height="${Bf.h}"/></clipPath>`:'')+
+  `<marker id="ar" class="mk" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z"/></marker></defs>`+
+  `<style>${hid?hid+'{display:none}':''}</style><rect x="0" y="0" width="${VW}" height="${VH}" fill="var(--board)"/>`+ax+
+  `<g clip-path="url(#cpA)">${lay.areas}${lay.ghost}${lay.curves}</g>`+(Bf?`<g clip-path="url(#cpB)">${lay.extra}</g>`:'')+`${lay.guides}<g class="ln-dots">${lay.points}</g>${lay.tags}${lay.handles}${ink}`;
+  let h='';if(out.status)h+=`<span class="status ${out.status.c}">${escH(out.status.t)}</span>`;
+  h+='<dl class="ro">'+out.rows.map(r=>r==='-'?'<div class="sep"></div>':`<dt>${escH(r[0])}</dt><dd class="${r[2]||''}">${escH(r[1])}</dd>`).join('')+'</dl>';
+  ro.innerHTML=h;
+}
+
+/* ---------- pointer ---------- */
+let drag=null,stroke=null;
+function toSvg(e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;const m=svg.getScreenCTM();return m?p.matrixTransform(m.inverse()):{x:0,y:0};}
+const toEcon=(s,f)=>({q:(s.x-f.x)/f.w*f.qmax,p:(1-(s.y-f.y)/f.h)*f.pmax});
+function freeDown(e,s){const st=cur(),fr=FRAMES.main,raw=toEcon(s,fr),pt={q:cl(raw.q,0,100),p:cl(raw.p,0,100)};
+  if(st.tool==='select'){const t=e.target.closest('[data-fo]');
+    if(!t){if(st.sel!=null){st.sel=null;buildCtrl();render();}return;}
+    const id=+t.dataset.fo,o=st.objs.find(x=>x.id===id);if(!o)return;
+    if(st.sel!==id){st.sel=id;buildCtrl();}
+    drag={kind:'free',part:t.dataset.part,id,orig:copy(o),fr,start:pt};svg.setPointerCapture(e.pointerId);e.preventDefault();render();return;}
+  const type=st.tool,label=autoLabel(st,type),o={id:st.nid++,type,label,color:FCOL[label]||PAL[st.objs.length%PAL.length],x1:pt.q,y1:pt.p,x2:pt.q,y2:pt.p,bow:0};
+  st.draft=o;drag={kind:'fdraw',fr,start:pt};svg.setPointerCapture(e.pointerId);e.preventDefault();render();}
+svg.addEventListener('pointerdown',e=>{const s=toSvg(e),st=cur();
+  if(G.tool==='pen'){stroke={c:G.pen,p:[[Math.round(s.x),Math.round(s.y)]]};st.strokes.push(stroke);svg.setPointerCapture(e.pointerId);e.preventDefault();render();return;}
+  if(G.tpl==='free'){freeDown(e,s);return;}
+  const t=e.target.closest('[data-drag]');if(!t)return;const kind=t.dataset.drag,key=t.dataset.key;
+  const fr=FRAMES[t.dataset.fr]||FRAMES[FRM[G.tpl]||'main'];
+  let orig=null;if(kind==='line')orig=copy(st[key]);else if(kind==='end')orig=copy(st[key.split(':')[0]]);else if(kind==='aeb'||kind==='pcshift')orig=st[key];
+  drag={kind,key,orig,fr,start:toEcon(s,fr)};svg.setPointerCapture(e.pointerId);e.preventDefault();
+});
+svg.addEventListener('pointermove',e=>{
+  if(stroke){const s=toSvg(e);const last=stroke.p[stroke.p.length-1];if(Math.hypot(s.x-last[0],s.y-last[1])>1.5){stroke.p.push([Math.round(s.x),Math.round(s.y)]);render();}return;}
+  if(!drag)return;const d=drag,pt=toEcon(toSvg(e),d.fr),st=cur(),dq=pt.q-d.start.q,dp=pt.p-d.start.p;
+  if(d.kind==='line'){const o=d.orig;const tq=cl(dq,-80,80),tp=cl(dp,-80,80);
+    st[d.key]=fitLine({x1:o.x1+tq,y1:o.y1+tp,x2:o.x2+tq,y2:o.y2+tp})||st[d.key];}
+  else if(d.kind==='end'){const[k,i]=d.key.split(':'),o=i==='1'?'2':'1',n=copy(d.orig);n['x'+i]=cl(pt.q,0,100);n['y'+i]=cl(pt.p,0,100);
+    if(Math.abs(n['x'+i]-n['x'+o])>=4){const s=(n.y2-n.y1)/(n.x2-n.x1);if(s*(SIGN[k]||1)>0.05)st[k]=n;}}
+  else if(d.kind==='vline')st[d.key]=cl(pt.q,d.fr.qmax*0.02,d.fr.qmax*0.98);
+  else if(d.kind==='aeb')st.A=cl(d.orig+dp,0,70);
+  else if(d.kind==='aes')st.b=cl((pt.p-st.A)/Math.max(pt.q,5),0.05,0.95);
+  else if(d.kind==='pcshift')st.pe=cl(d.orig+dp,-1,8);
+  else if(d.kind==='pcu')st.u=cl(pt.q,1,11.5);
+  else if(d.kind==='fdraw'){const o=st.draft,q=cl(pt.q,0,100),p=cl(pt.p,0,100);if(o){snapEnd(o,'2',q,p);if(o.type!=='line')o.bow=defaultBow(o);}}
+  else if(d.kind==='free'){const o=st.objs.find(x=>x.id===d.id),O=d.orig,q=cl(pt.q,0,100),p=cl(pt.p,0,100);if(o){
+    if(d.part==='body'){const tq=cl(dq,-Math.min(O.x1,O.x2),100-Math.max(O.x1,O.x2)),tp=cl(dp,-Math.min(O.y1,O.y2),100-Math.max(O.y1,O.y2));Object.assign(o,{x1:O.x1+tq,x2:O.x2+tq,y1:O.y1+tp,y2:O.y2+tp});}
+    else if(d.part==='p1'||d.part==='p2')snapEnd(o,d.part[1],q,p);
+    else if(d.part==='bow'){const mx=(o.x1+o.x2)/2,my=(o.y1+o.y2)/2,dx=o.x2-o.x1,dy=o.y2-o.y1,L=Math.hypot(dx,dy)||1;const proj=((q-mx)*(-dy/L)+(p-my)*(dx/L));o.bow=cl(2*proj/L,-0.6,0.6);}}}
+  render();
+});
+function end(){if(drag&&drag.kind==='fdraw'){const st=cur(),o=st.draft;st.draft=null;
+    if(o&&Math.hypot(o.x2-o.x1,o.y2-o.y1)>2){st.objs.push(o);st.sel=o.id;}buildCtrl();render();}
+  if(drag||stroke)save();drag=null;stroke=null;}
+svg.addEventListener('pointerup',end);svg.addEventListener('pointercancel',end);
+
+/* ---------- toolbar ---------- */
+const tDrag=document.getElementById('tDrag'),tPen=document.getElementById('tPen'),tNums=document.getElementById('tNums');
+function setTool(t){G.tool=t;tDrag.setAttribute('aria-pressed',t==='drag');tPen.setAttribute('aria-pressed',t==='pen');render();}
+tDrag.onclick=()=>setTool('drag');tPen.onclick=()=>setTool('pen');
+document.querySelectorAll('[data-pc]').forEach(b=>b.onclick=()=>{G.pen=b.dataset.pc;document.querySelectorAll('[data-pc]').forEach(x=>x.setAttribute('aria-pressed',x===b));setTool('pen');save();});
+document.getElementById('tUndo').onclick=()=>{cur().strokes.pop();render();save();};
+document.getElementById('tClear').onclick=()=>{cur().strokes=[];render();save();};
+tNums.onclick=()=>{G.nums=!G.nums;tNums.setAttribute('aria-pressed',G.nums);render();save();};
+document.getElementById('tFull').onclick=()=>{const w=document.getElementById('boardWrap');try{if(document.fullscreenElement)document.exitFullscreen();else{const r=w.requestFullscreen&&w.requestFullscreen();if(r&&r.catch)r.catch(()=>{});}}catch(e){}};
+
+document.querySelectorAll('[data-pc]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.pc===G.pen));
+tNums.setAttribute('aria-pressed',G.nums);
+buildCtrl();render();
+})();
+</script>
+
+</body>
+</html>

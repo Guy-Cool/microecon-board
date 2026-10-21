@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>總經專有名詞發音表</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap">
+<style>
+/* Macro edition. Layout: companion to the econ board — sticky control bar, unit chips, then unit sections of tappable term cards in an auto-fill grid */
+:root{
+  --bg:#e9eee9; --surface:#f6f8f5; --card:#fdfefc; --ink:#1b2621; --muted:#5a6a61;
+  --rule:#cdd7d0; --accent:#1d6b57; --accent-ink:#ffffff; --accent-soft:#d6e9e1;
+  --abbr:#6a49c9; --abbr-bg:#ece6fb; --warn:#9a6400;
+  --f-en:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --f-zh:"LXGW WenKai TC","Kaiti TC","BiauKai","DFKai-SB","KaiTi",serif;
+  --f-ui:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111916; --surface:#17221e; --card:#1a2823; --ink:#e6eee8; --muted:#97aa9f;
+    --rule:#2d3d36; --accent:#7ccfb4; --accent-ink:#0f1915; --accent-soft:#1f3a31;
+    --abbr:#c4b3ff; --abbr-bg:#2a2342; --warn:#f0b54a;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111916; --surface:#17221e; --card:#1a2823; --ink:#e6eee8; --muted:#97aa9f;
+  --rule:#2d3d36; --accent:#7ccfb4; --accent-ink:#0f1915; --accent-soft:#1f3a31;
+  --abbr:#c4b3ff; --abbr-bg:#2a2342; --warn:#f0b54a;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:14px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 32px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.app{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+header h1{font-family:var(--f-zh);font-weight:700;font-size:1.7rem;margin:0;line-height:1.15;text-wrap:balance}
+header h1 small{font-size:.65em;font-weight:400;color:var(--muted)}
+header p{margin:2px 0 0;color:var(--muted);font-size:.85rem}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:10px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.search{flex:1 1 240px;min-width:0;position:relative}
+.search input{width:100%;font:inherit;font-size:.95rem;padding:7px 10px 7px 32px;border:1px solid var(--rule);border-radius:8px;background:var(--card);color:var(--ink)}
+.search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.grp{display:flex;align-items:center;gap:6px}
+.grp>span{font-size:.78rem;color:var(--muted)}
+.seg{display:flex;gap:2px;background:var(--bg);border-radius:8px;padding:2px}
+.seg button{font:inherit;font-size:.82rem;border:0;background:transparent;color:var(--muted);padding:5px 10px;border-radius:6px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);font-weight:600;box-shadow:0 0 0 1px var(--rule)}
+.chk{display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer}
+.chk input{accent-color:var(--accent);width:16px;height:16px;margin:0}
+.btn{font:inherit;font-size:.82rem;border:1px solid var(--rule);background:var(--card);color:var(--ink);padding:5px 11px;border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--accent)}
+.btn.stop{border-color:var(--accent);color:var(--accent);font-weight:600}
+.units{display:flex;flex-wrap:wrap;gap:4px}
+.units button{font:inherit;font-size:.82rem;border:1px solid var(--rule);background:var(--card);color:var(--muted);padding:4px 10px;border-radius:999px;cursor:pointer}
+.units button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.units .n{font-variant-numeric:tabular-nums;opacity:.75;margin-left:3px}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.notice{background:var(--card);border:1px solid var(--warn);color:var(--warn);border-radius:10px;padding:8px 12px;font-size:.88rem}
+section.unit{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.uh{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 12px;border-bottom:1px solid var(--rule);padding-bottom:6px}
+.uh h2{margin:0;font-family:var(--f-en);font-weight:600;font-size:1.25rem;letter-spacing:.005em}
+.uh h2 span{font-family:var(--f-zh);font-weight:400;color:var(--muted);font-size:.95em;margin-left:6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.term{font:inherit;text-align:left;color:var(--ink);background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:10px 40px 10px 12px;cursor:pointer;position:relative;display:flex;flex-direction:column;gap:2px;min-width:0}
+.term:hover{border-color:var(--accent)}
+.term .en{font-family:var(--f-en);font-weight:500;font-size:1.08rem;line-height:1.3;overflow-wrap:anywhere}
+.term .zh{font-family:var(--f-zh);font-size:1rem;color:var(--muted);line-height:1.35}
+.term abbr{font-family:var(--f-ui);font-size:.72rem;font-weight:600;text-decoration:none;color:var(--abbr);background:var(--abbr-bg);border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:2px;white-space:nowrap}
+.spk{position:absolute;right:10px;top:10px;width:22px;height:22px;color:var(--muted);display:flex;align-items:center;justify-content:center}
+.term:hover .spk{color:var(--accent)}
+.term.playing{border-color:var(--accent);background:var(--accent-soft)}
+.term.playing .spk{color:var(--accent)}
+.bars{display:none;gap:2px;align-items:flex-end;height:14px}
+.bars i{display:block;width:3px;background:currentColor;border-radius:1px;height:40%}
+.term.playing .ico{display:none}.term.playing .bars{display:flex}
+@media (prefers-reduced-motion:no-preference){
+  .term.playing .bars i{animation:eq .7s ease-in-out infinite}
+  .term.playing .bars i:nth-child(2){animation-delay:.15s}.term.playing .bars i:nth-child(3){animation-delay:.3s}
+  .term{transition:border-color .15s,background .15s}
+}
+@keyframes eq{0%,100%{height:30%}50%{height:100%}}
+.hide-en .term:not(.shown) .en,.hide-zh .term:not(.shown) .zh{color:transparent;background:var(--rule);border-radius:4px;user-select:none}
+.hide-en .term:not(.shown) .en abbr{visibility:hidden}
+.hide-en .term:not(.shown) .en,.hide-zh .term:not(.shown) .zh{width:fit-content;max-width:100%}
+.empty{color:var(--muted);text-align:center;padding:32px 0}
+.foot{color:var(--muted);font-size:.8rem;margin-top:10px}
+[hidden]{display:none!important}
+@media (max-width:700px){
+  .bar{position:static}
+  .units{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+  .units button{flex:none;white-space:nowrap}
+  .grid{grid-template-columns:minmax(0,1fr)}
+}
+</style>
+</head>
+<body>
+
+
+<div class="app">
+  <header>
+    <h1>Macro Econ Glossary <small>(總經專有名詞發音表)</small></h1>
+    <p>Click a term to hear it in English (點一下名詞就會朗讀英文)</p>
+  </header>
+
+  <div class="bar">
+    <div class="row">
+      <label class="search"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.6"/></svg>
+        <input type="text" id="q" placeholder="Search English or 中文 (搜尋)" autocomplete="off" aria-label="Search (搜尋)"></label>
+      <div class="grp"><span>Accent (口音)</span><div class="seg" role="group" aria-label="Accent (口音)"><button data-acc="en-US" id="accUS">US (美式)</button><button data-acc="en-GB" id="accGB">UK (英式)</button></div></div>
+      <div class="grp"><span>Speed (速度)</span><div class="seg" role="group" aria-label="Speed (速度)"><button data-rate="1" id="rN">Normal (正常)</button><button data-rate="0.7" id="rS">Slow (慢速)</button></div></div>
+    </div>
+    <div class="row">
+      <label class="chk"><input type="checkbox" id="showEn" checked>Show English (顯示英文)</label>
+      <label class="chk"><input type="checkbox" id="showZh" checked>Show Chinese (顯示中文)</label>
+      <span style="flex:1"></span>
+      <button class="btn" id="stopBtn" hidden>■ Stop (停止)</button>
+    </div>
+    <div class="units" id="units" role="group" aria-label="Units (單元)"></div>
+  </div>
+
+  <div class="notice" id="notice" hidden></div>
+  <main id="list"></main>
+  <p class="foot">Pronunciation uses the voices built into this device's browser; Chrome, Edge and Safari work best. (發音使用裝置瀏覽器內建語音，建議用 Chrome、Edge 或 Safari。)</p>
+</div>
+
+<script>
+(function(){
+const UNITS=[
+ {id:'gdp',en:'Measuring the Economy',zh:'衡量經濟表現',t:[
+  ['Gross domestic product','國內生產毛額','GDP'],['Nominal GDP','名目 GDP'],['Real GDP','實質 GDP'],['GDP deflator','GDP 平減指數'],['GDP per capita','每人 GDP'],
+  ['Gross national product','國民生產毛額','GNP'],['Gross national income','國民所得毛額','GNI'],['Expenditure approach','支出面法'],['Income approach','所得面法'],['Value added','附加價值'],
+  ['Final goods and services','最終財貨與勞務'],['Intermediate goods','中間財'],['Consumption','消費','C'],['Investment','投資','I'],['Government purchases','政府購買','G'],['Net exports','淨出口','NX'],
+  ['Circular flow model','循環流程模型'],['Underground economy','地下經濟']]},
+ {id:'unemp',en:'Unemployment',zh:'失業',t:[
+  ['Labor force','勞動力'],['Labor force participation rate','勞動參與率'],['Unemployment rate','失業率'],['Employed','就業者'],['Unemployed','失業者'],['Discouraged workers','怯志工作者'],
+  ['Frictional unemployment','摩擦性失業'],['Structural unemployment','結構性失業'],['Cyclical unemployment','循環性失業'],['Seasonal unemployment','季節性失業'],
+  ['Natural rate of unemployment','自然失業率'],['Full employment','充分就業'],['Underemployment','低度就業']]},
+ {id:'infl',en:'Inflation',zh:'通貨膨脹',t:[
+  ['Inflation','通貨膨脹'],['Deflation','通貨緊縮'],['Disinflation','通膨減緩'],['Hyperinflation','惡性通貨膨脹'],['Stagflation','停滯性通膨'],
+  ['Consumer price index','消費者物價指數','CPI'],['Price index','物價指數'],['Market basket','一籃子財貨'],['Base year','基期'],['Inflation rate','通貨膨脹率'],
+  ['Nominal interest rate','名目利率'],['Real interest rate','實質利率'],['Fisher equation','費雪方程式'],['Demand-pull inflation','需求拉動型通膨'],['Cost-push inflation','成本推動型通膨'],
+  ['Menu costs','菜單成本'],['Shoe-leather costs','皮鞋成本'],['Purchasing power','購買力']]},
+ {id:'cycle',en:'Business Cycles and Growth',zh:'景氣循環與經濟成長',t:[
+  ['Business cycle','景氣循環'],['Expansion','擴張期'],['Peak','高峰'],['Contraction','收縮期'],['Recession','衰退'],['Trough','谷底'],['Depression','蕭條'],
+  ['Economic growth','經濟成長'],['Productivity','生產力'],['Physical capital','實體資本'],['Human capital','人力資本'],['Technological progress','技術進步'],
+  ['Rule of 70','70 法則'],['Potential output','潛在產出'],['Production possibilities curve','生產可能曲線','PPC']]},
+ {id:'adas',en:'Aggregate Demand and Aggregate Supply',zh:'總合需求與總合供給',t:[
+  ['Aggregate demand','總合需求','AD'],['Aggregate supply','總合供給','AS'],['Short-run aggregate supply','短期總合供給','SRAS'],['Long-run aggregate supply','長期總合供給','LRAS'],
+  ['Price level','物價水準','PL'],['Wealth effect','財富效果'],['Interest rate effect','利率效果'],['Exchange rate effect','匯率效果'],['Sticky wages','工資僵固性'],
+  ['Demand shock','需求衝擊'],['Supply shock','供給衝擊'],['Short-run equilibrium','短期均衡'],['Long-run equilibrium','長期均衡'],
+  ['Recessionary gap','衰退缺口'],['Inflationary gap','膨脹缺口'],['Output gap','產出缺口'],['Self-correction','自我調整機制']]},
+ {id:'keyn',en:'Keynesian Model and Multipliers',zh:'凱因斯模型與乘數',t:[
+  ['Aggregate expenditure','總支出','AE'],['Autonomous spending','自發性支出'],['Consumption function','消費函數'],['Disposable income','可支配所得'],
+  ['Marginal propensity to consume','邊際消費傾向','MPC'],['Marginal propensity to save','邊際儲蓄傾向','MPS'],['Average propensity to consume','平均消費傾向','APC'],
+  ['Spending multiplier','支出乘數'],['Tax multiplier','租稅乘數'],['Balanced budget multiplier','平衡預算乘數'],['45-degree line','45 度線','','forty-five degree line'],
+  ['Unplanned inventory','非計畫性存貨'],['Paradox of thrift','節儉的矛盾']]},
+ {id:'fiscal',en:'Fiscal Policy',zh:'財政政策',t:[
+  ['Fiscal policy','財政政策'],['Expansionary fiscal policy','擴張性財政政策'],['Contractionary fiscal policy','緊縮性財政政策'],['Government spending','政府支出'],['Transfer payments','移轉性支付'],
+  ['Taxes','租稅'],['Budget deficit','預算赤字'],['Budget surplus','預算盈餘'],['National debt','國債（政府債務）'],['Automatic stabilizers','自動穩定機制'],
+  ['Discretionary fiscal policy','權衡性財政政策'],['Crowding out','排擠效果'],['Policy lags','政策時間落後']]},
+ {id:'money',en:'Money and Banking',zh:'貨幣與銀行',t:[
+  ['Money','貨幣'],['Medium of exchange','交易媒介'],['Unit of account','計價單位'],['Store of value','價值儲藏'],['Commodity money','商品貨幣'],['Fiat money','法定貨幣'],
+  ['M1','M1（狹義貨幣）','','M one'],['M2','M2（廣義貨幣）','','M two'],['Liquidity','流動性'],['Demand deposits','活期存款'],
+  ['Fractional reserve banking','部分準備制度'],['Required reserve ratio','法定準備率'],['Excess reserves','超額準備'],['Money multiplier','貨幣乘數'],
+  ['Balance sheet','資產負債表'],['Assets','資產'],['Liabilities','負債'],['Quantity theory of money','貨幣數量學說'],['Velocity of money','貨幣流通速度'],['Equation of exchange','交易方程式','MV = PY','equation of exchange']]},
+ {id:'monpol',en:'Monetary Policy',zh:'貨幣政策',t:[
+  ['Central bank','中央銀行'],['Monetary policy','貨幣政策'],['Expansionary monetary policy','擴張性貨幣政策'],['Contractionary monetary policy','緊縮性貨幣政策'],
+  ['Open market operations','公開市場操作'],['Discount rate','重貼現率'],['Policy interest rate','政策利率'],['Federal funds rate','聯邦資金利率'],['Interest on reserves','準備金利息'],
+  ['Money supply','貨幣供給','MS'],['Money demand','貨幣需求','MD'],['Money market','貨幣市場'],['Investment demand','投資需求','ID'],['Liquidity trap','流動性陷阱'],['Quantitative easing','量化寬鬆','QE']]},
+ {id:'loan',en:'Loanable Funds and Financial Markets',zh:'可貸資金與金融市場',t:[
+  ['Loanable funds market','可貸資金市場'],['Saving','儲蓄'],['National saving','國民儲蓄'],['Private saving','民間儲蓄'],['Public saving','公共儲蓄'],
+  ['Financial intermediary','金融中介機構'],['Bond','債券'],['Stock','股票'],['Interest rate','利率'],['Bond price','債券價格'],['Present value','現值']]},
+ {id:'pc',en:'Phillips Curve and Expectations',zh:'菲利普曲線與預期',t:[
+  ['Phillips curve','菲利普曲線'],['Short-run Phillips curve','短期菲利普曲線','SRPC'],['Long-run Phillips curve','長期菲利普曲線','LRPC'],
+  ['Expected inflation','預期通膨'],['Inflation expectations','通膨預期'],['Adaptive expectations','適應性預期'],['Rational expectations','理性預期'],
+  ['Natural rate hypothesis','自然率假說'],['Inflation–unemployment trade-off','通膨與失業的抵換','','inflation unemployment trade-off'],['Misery index','痛苦指數']]},
+ {id:'open',en:'Open Economy',zh:'開放經濟',t:[
+  ['Balance of payments','國際收支'],['Current account','經常帳'],['Capital and financial account','資本與金融帳'],['Trade balance','貿易收支'],
+  ['Trade deficit','貿易逆差（赤字）'],['Trade surplus','貿易順差（盈餘）'],['Exchange rate','匯率'],['Foreign exchange market','外匯市場'],
+  ['Appreciation','升值'],['Depreciation','貶值'],['Floating exchange rate','浮動匯率'],['Fixed exchange rate','固定匯率'],
+  ['Purchasing power parity','購買力平價','PPP'],['Capital flows','資本流動'],['Net capital outflow','淨資本流出']]}
+];
+const ALL=[];UNITS.forEach(u=>u.t.forEach(t=>ALL.push({u:u.id,en:t[0],zh:t[1],ab:t[2]||'',say:t[3]||t[0]})));
+
+/* settings */
+const KEY='macro-glossary-v1';
+let S={acc:'en-US',rate:1,showEn:true,showZh:true,unit:'all'};
+try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}};
+let q='';
+
+const $=id=>document.getElementById(id);
+const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+const list=$('list'),unitsEl=$('units'),notice=$('notice'),stopBtn=$('stopBtn');
+
+/* speech */
+const synth=('speechSynthesis' in window)?window.speechSynthesis:null;
+let voices=[];
+function loadVoices(){if(!synth)return;voices=synth.getVoices().filter(v=>/^en[-_]/i.test(v.lang)||/^en$/i.test(v.lang));}
+if(synth){loadVoices();if('onvoiceschanged' in synth)synth.onvoiceschanged=loadVoices;}
+function pickVoice(){const want=S.acc.toLowerCase().replace('_','-');
+  const match=voices.filter(v=>v.lang.toLowerCase().replace('_','-')===want);
+  const pool=match.length?match:voices;
+  return pool.find(v=>/google|natural|enhanced|premium|samantha|daniel|aria|jenny|libby|sonia/i.test(v.name))||pool[0]||null;}
+let token=0;
+function speak(text,done){if(!synth){showNotice();done&&done();return;}
+  synth.cancel();const my=++token;
+  setTimeout(()=>{if(my!==token)return;const u=new SpeechSynthesisUtterance(text);u.lang=S.acc;const v=pickVoice();if(v)u.voice=v;u.rate=S.rate;u.pitch=1;
+    let fin=false;const end=()=>{if(fin)return;fin=true;if(my===token)done&&done();};
+    u.onend=end;u.onerror=end;synth.speak(u);
+    setTimeout(()=>{if(!fin&&!synth.speaking&&!synth.pending)end();},Math.max(4000,text.length*260/S.rate));},60);}
+function stopAll(){token++;queue=null;if(synth)synth.cancel();document.querySelectorAll('.term.playing').forEach(c=>c.classList.remove('playing'));stopBtn.hidden=true;}
+function showNotice(){notice.hidden=false;notice.textContent="This browser can't read text aloud. Please open the page in Chrome, Edge or Safari. (這個瀏覽器不支援朗讀，請改用 Chrome、Edge 或 Safari 開啟。)";}
+if(!synth)showNotice();
+else setTimeout(()=>{loadVoices();if(!voices.length){notice.hidden=false;notice.textContent="No English voice was found on this device yet. If clicking makes no sound, install an English voice in the system settings or try Chrome. (這台裝置目前找不到英文語音；若點了沒有聲音，請在系統設定加裝英文語音，或改用 Chrome。)";}},1500);
+
+let queue=null;
+function playCard(card,done){document.querySelectorAll('.term.playing').forEach(c=>c.classList.remove('playing'));
+  card.classList.add('playing','shown');
+  speak(card.dataset.say,()=>{card.classList.remove('playing');done&&done();});}
+function playUnit(id){stopAll();const cards=[...list.querySelectorAll(`section[data-unit="${id}"] .term`)];if(!cards.length)return;
+  const my={i:0};queue=my;stopBtn.hidden=false;
+  const next=()=>{if(queue!==my)return;if(my.i>=cards.length){stopAll();return;}const c=cards[my.i++];c.scrollIntoView({block:'nearest',behavior:'smooth'});
+    playCard(c,()=>{if(queue!==my)return;setTimeout(next,700);});};
+  next();}
+
+/* render */
+const SPK='<svg class="ico" width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 8h3l4-3.5v11L6 12H3z" fill="currentColor"/><path d="M13 7.2a4 4 0 0 1 0 5.6M15.2 5a7 7 0 0 1 0 10" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg><span class="bars"><i></i><i></i><i></i></span>';
+function matches(t){if(!q)return true;const s=q.toLowerCase();return t.en.toLowerCase().includes(s)||t.zh.includes(q)||t.ab.toLowerCase().includes(s);}
+function renderUnits(){const counts={};ALL.filter(matches).forEach(t=>counts[t.u]=(counts[t.u]||0)+1);const total=Object.values(counts).reduce((a,b)=>a+b,0);
+  unitsEl.innerHTML=`<button data-unit="all" aria-pressed="${S.unit==='all'}">All (全部)<span class="n">${total}</span></button>`+
+    UNITS.map(u=>`<button data-unit="${u.id}" aria-pressed="${S.unit===u.id}">${esc(u.en)} (${esc(u.zh)})<span class="n">${counts[u.id]||0}</span></button>`).join('');}
+function render(){stopAll();renderUnits();let h='';
+  for(const u of UNITS){if(S.unit!=='all'&&S.unit!==u.id)continue;const ts=u.t.map(t=>({en:t[0],zh:t[1],ab:t[2]||'',say:t[3]||t[0]})).filter(matches);if(!ts.length)continue;
+    h+=`<section class="unit" data-unit="${u.id}"><div class="uh"><h2>${esc(u.en)}<span>${esc(u.zh)}</span></h2><button class="btn" data-play="${u.id}">▶ Play this unit (依序朗讀本單元)</button></div><div class="grid">`+
+      ts.map(t=>`<button class="term" data-say="${esc(t.say)}" aria-label="Play: ${esc(t.en)} (${esc(t.zh)})"><span class="spk">${SPK}</span><span class="en">${esc(t.en)}${t.ab?`<abbr>${esc(t.ab)}</abbr>`:''}</span><span class="zh">${esc(t.zh)}</span></button>`).join('')+'</div></section>';}
+  list.innerHTML=h||'<p class="empty">No matching terms. Try another word. (找不到符合的名詞，請換個關鍵字。)</p>';}
+function syncControls(){document.querySelectorAll('[data-acc]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.acc===S.acc));
+  document.querySelectorAll('[data-rate]').forEach(b=>b.setAttribute('aria-pressed',Number(b.dataset.rate)===S.rate));
+  $('showEn').checked=S.showEn;$('showZh').checked=S.showZh;
+  document.body.classList.toggle('hide-en',!S.showEn);document.body.classList.toggle('hide-zh',!S.showZh);}
+
+/* events */
+list.addEventListener('click',e=>{const p=e.target.closest('[data-play]');if(p){playUnit(p.dataset.play);return;}
+  const c=e.target.closest('.term');if(!c)return;queue=null;stopBtn.hidden=true;playCard(c);});
+unitsEl.addEventListener('click',e=>{const b=e.target.closest('[data-unit]');if(!b)return;S.unit=b.dataset.unit;save();render();});
+document.querySelectorAll('[data-acc]').forEach(b=>b.onclick=()=>{S.acc=b.dataset.acc;save();syncControls();});
+document.querySelectorAll('[data-rate]').forEach(b=>b.onclick=()=>{S.rate=Number(b.dataset.rate);save();syncControls();});
+$('showEn').onchange=e=>{S.showEn=e.target.checked;save();syncControls();list.querySelectorAll('.term.shown').forEach(c=>c.classList.remove('shown'));};
+$('showZh').onchange=e=>{S.showZh=e.target.checked;save();syncControls();list.querySelectorAll('.term.shown').forEach(c=>c.classList.remove('shown'));};
+$('q').addEventListener('input',e=>{q=e.target.value.trim();render();});
+stopBtn.onclick=stopAll;
+
+if(S.unit!=='all'&&!UNITS.some(u=>u.id===S.unit))S.unit='all';
+syncControls();render();
+window.__glossary={ALL,speak};
+})();
+</script>
+
+</body>
+</html>

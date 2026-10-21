@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>個經互動畫板</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -154,6 +159,9 @@ svg#board.pen{cursor:crosshair}
 svg.pen .cv[data-drag],svg.pen .hd{cursor:crosshair}
 @media (prefers-reduced-motion:no-preference){.tabs button,.tool button{transition:background .15s}}
 </style>
+</head>
+<body>
+
 
 <div class="app">
   <header class="top">
@@ -242,7 +250,13 @@ const r1=v=>v.toFixed(1);
 function lf(Ln){const s=(Ln.y2-Ln.y1)/(Ln.x2-Ln.x1),b=Ln.y1-s*Ln.x1;return{s,b,P:q=>b+s*q,Q:p=>(p-b)/s};}
 const lin=(s,b)=>({s,b,P:q=>b+s*q,Q:p=>(p-b)/s});
 function inter(a,b){if(Math.abs(a.s-b.s)<1e-9)return null;const q=(b.b-a.b)/(a.s-b.s);return{q,p:a.P(q)};}
-const same=(a,b)=>['x1','y1','x2','y2'].every(k=>Math.abs(a[k]-b[k])<0.3);
+const same=(a,b)=>{const A=lf(a),B=lf(b);return Math.abs(A.s-B.s)<0.005&&Math.abs(A.b-B.b)<0.3;};
+/* keep a dragged line's handles inside the 0–100 box: clip the infinite line to the box, then inset the ends */
+function fitLine(L){const dx=L.x2-L.x1,dy=L.y2-L.y1;let t0=-1e4,t1=1e4;
+  for(const[p,q]of[[-dx,L.x1],[dx,100-L.x1],[-dy,L.y1],[dy,100-L.y1]]){if(Math.abs(p)<1e-12){if(q<0)return null;continue;}const r=q/p;if(p<0)t0=Math.max(t0,r);else t1=Math.min(t1,r);}
+  if(t1-t0<1e-9)return null;const a=[L.x1+t0*dx,L.y1+t0*dy],b=[L.x1+t1*dx,L.y1+t1*dy];if(Math.hypot(b[0]-a[0],b[1]-a[1])<12)return null;
+  const k=0.05,A=[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k],B=[b[0]-(b[0]-a[0])*k,b[1]-(b[1]-a[1])*k];
+  return A[0]<=B[0]?{x1:A[0],y1:A[1],x2:B[0],y2:B[1]}:{x1:B[0],y1:B[1],x2:A[0],y2:A[1]};}
 const AVC=(q,a)=>a-1.2*q+0.012*q*q, MC=(q,a)=>a-2.4*q+0.036*q*q, ATC=(q,a,F)=>AVC(q,a)+F/q;
 const TVCf=(q,a)=>a*q-1.2*q*q+0.012*q*q*q;
 const TPb=L=>0.6*L*L-0.004*L*L*L, MPb=L=>1.2*L-0.012*L*L, APb=L=>0.6*L-0.004*L*L;
@@ -802,8 +816,8 @@ function freeDown(e,s){const st=cur(),fr=FRAMES.main,raw=toEcon(s,fr),pt={q:cl(r
 svg.addEventListener('pointermove',e=>{
   if(stroke){const s=toSvg(e);const last=stroke.p[stroke.p.length-1];if(Math.hypot(s.x-last[0],s.y-last[1])>1.5){stroke.p.push([Math.round(s.x),Math.round(s.y)]);render();}return;}
   if(!drag)return;const d=drag,pt=toEcon(toSvg(e),d.fr),st=cur(),dq=pt.q-d.start.q,dp=pt.p-d.start.p;
-  if(d.kind==='line'){const o=d.orig;const tq=cl(dq,-Math.min(o.x1,o.x2),100-Math.max(o.x1,o.x2)),tp=cl(dp,-Math.min(o.y1,o.y2),100-Math.max(o.y1,o.y2));
-    st[d.key]={x1:o.x1+tq,y1:o.y1+tp,x2:o.x2+tq,y2:o.y2+tp};}
+  if(d.kind==='line'){const o=d.orig;const tq=cl(dq,-80,80),tp=cl(dp,-80,80);
+    st[d.key]=fitLine({x1:o.x1+tq,y1:o.y1+tp,x2:o.x2+tq,y2:o.y2+tp})||st[d.key];}
   else if(d.kind==='end'){const[k,i]=d.key.split(':'),o=i==='1'?'2':'1',n=copy(d.orig);n['x'+i]=cl(pt.q,0,100);n['y'+i]=cl(pt.p,0,100);
     if(Math.abs(n['x'+i]-n['x'+o])>=4){const s=(n.y2-n.y1)/(n.x2-n.x1);if((k==='D'&&s<-0.05)||(k==='S'&&s>0.05))st[k]=n;}}
   else if(d.kind==='hline')st[d.key]=cl(pt.p,1,99);
@@ -845,3 +859,6 @@ tNums.setAttribute('aria-pressed',G.nums);
 buildCtrl();render();
 })();
 </script>
+
+</body>
+</html>

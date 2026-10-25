@@ -96,12 +96,15 @@ section.unit{display:flex;flex-direction:column;gap:10px;margin-top:6px}
   .units button{flex:none;white-space:nowrap}
   .grid{grid-template-columns:minmax(0,1fr)}
 }
+.homelink{align-self:flex-start;font-size:.82rem;font-weight:600;color:var(--accent);text-decoration:none;border:1px solid var(--rule);background:var(--surface);padding:3px 12px;border-radius:999px}
+.homelink:hover{border-color:var(--accent)}
 </style>
 </head>
 <body>
 
 
 <div class="app">
+  <a class="homelink" href="index.html">← Home (首頁)</a>
   <header>
     <h1>Micro Econ Glossary <small>(個經專有名詞發音表)</small></h1>
     <p>Click a term to hear it in English (點一下名詞就會朗讀英文)</p>
@@ -134,7 +137,7 @@ const UNITS=[
  {id:'basic',en:'Basic Concepts',zh:'基本概念',t:[
   ['Scarcity','稀少性'],['Opportunity cost','機會成本'],['Trade-off','抵換'],['Incentive','誘因'],['Marginal analysis','邊際分析'],['Ceteris paribus','其他條件不變'],
   ['Production possibilities frontier','生產可能曲線','PPF'],['Comparative advantage','比較利益'],['Absolute advantage','絕對利益'],['Specialization','專業化'],
-  ['Microeconomics','個體經濟學'],['Macroeconomics','總體經濟學'],['Positive economics','實證經濟學'],['Normative economics','規範經濟學'],['Efficiency','效率'],['Equity','公平']]},
+  ['Microeconomics','個體經濟學'],['Macroeconomics','總體經濟學'],['Positive economics','實證經濟學'],['Normative economics','規範經濟學'],['Efficiency','效率'],['Allocative efficiency','配置效率'],['Productive efficiency','生產效率'],['Equity','公平']]},
  {id:'sd',en:'Supply and Demand',zh:'供給與需求',t:[
   ['Demand','需求'],['Quantity demanded','需求量'],['Law of demand','需求法則'],['Demand schedule','需求表'],['Demand curve','需求曲線'],
   ['Supply','供給'],['Quantity supplied','供給量'],['Law of supply','供給法則'],['Supply curve','供給曲線'],

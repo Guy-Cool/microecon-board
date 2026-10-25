@@ -1,0 +1,1002 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>個經互動畫板</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: a teacher's board — grouped template tabs on top, a large graph-paper board on the left, a control rail on the right; stacks on narrow screens */
+:root{
+  --bg:#e9eee9; --surface:#f6f8f5; --board:#fdfefc; --ink:#1b2621; --muted:#5a6a61;
+  --rule:#cdd7d0; --grid:#e4eae5; --accent:#1d6b57; --accent-ink:#ffffff;
+  --cD:#2457b3; --cS:#c24a12; --cMC:#b0246f; --cATC:#1d7a5c; --cAVC:#8a7414; --cMR:#6a49c9; --cP:#27322d;
+  --aCS:#3d7be0; --aPS:#e3940e; --aDWL:#7a808c; --aPro:#1c9a54; --aLoss:#d23b3b; --aop:.22;
+  --good:#1c7a46; --warn:#9a6400; --bad:#b83232;
+  --inkR:#d23b3b; --inkB:#2457b3;
+  --f-hand:"LXGW WenKai TC","Kaiti TC","BiauKai","DFKai-SB","KaiTi",serif;
+  --f-ui:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111916; --surface:#17221e; --board:#1a2823; --ink:#e6eee8; --muted:#97aa9f;
+    --rule:#2d3d36; --grid:#22332c; --accent:#7ccfb4; --accent-ink:#0f1915;
+    --cD:#86aefc; --cS:#ff9b6a; --cMC:#f283c2; --cATC:#6fd5a9; --cAVC:#dcc66e; --cMR:#b9a4ff; --cP:#e6eee8;
+    --aCS:#6c9cf5; --aPS:#f2b23e; --aDWL:#a3acb9; --aPro:#3fcf7d; --aLoss:#ff6b6b; --aop:.3;
+    --good:#5fd394; --warn:#f0b54a; --bad:#ff7b7b; --inkR:#ff8a80; --inkB:#8fb4ff;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111916; --surface:#17221e; --board:#1a2823; --ink:#e6eee8; --muted:#97aa9f;
+  --rule:#2d3d36; --grid:#22332c; --accent:#7ccfb4; --accent-ink:#0f1915;
+  --cD:#86aefc; --cS:#ff9b6a; --cMC:#f283c2; --cATC:#6fd5a9; --cAVC:#dcc66e; --cMR:#b9a4ff; --cP:#e6eee8;
+  --aCS:#6c9cf5; --aPS:#f2b23e; --aDWL:#a3acb9; --aPro:#3fcf7d; --aLoss:#ff6b6b; --aop:.3;
+  --good:#5fd394; --warn:#f0b54a; --bad:#ff7b7b; --inkR:#ff8a80; --inkB:#8fb4ff;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:14px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 24px}
+.app{max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.top{display:flex;flex-direction:column;gap:10px}
+.brand h1{font-family:var(--f-hand);font-weight:700;font-size:1.7rem;margin:0;letter-spacing:.02em;line-height:1.15;text-wrap:balance}
+.brand h1 small{font-size:.65em;font-weight:400;color:var(--muted)}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:.85rem}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:4px}
+.tg{display:flex;flex-wrap:wrap;align-items:center;gap:2px}
+.tg>span{font-size:.72rem;color:var(--muted);letter-spacing:.06em;margin:0 6px 0 8px}
+.tabs .tg+.tg{border-left:1px solid var(--rule);padding-left:4px}
+@media (max-width:760px){.tabs{flex-direction:column}.tabs .tg+.tg{border-left:0;padding-left:0;border-top:1px solid var(--rule);padding-top:4px}}
+.tabs button{font:inherit;font-size:.88rem;border:0;background:transparent;color:var(--muted);padding:6px 11px;border-radius:7px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.tabs button:focus-visible,.tool button:focus-visible,.side button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.work{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:12px;align-items:start}
+@media (max-width:960px){.work{grid-template-columns:minmax(0,1fr)}}
+.board-wrap{background:var(--board);border:1px solid var(--rule);border-radius:12px;overflow:hidden;min-width:0;display:flex;flex-direction:column}
+.board-wrap:fullscreen{border-radius:0;justify-content:center}
+.board-wrap:fullscreen svg{height:calc(100vh - 60px);width:auto;max-width:100%;margin:0 auto}
+.tool{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--rule);background:var(--surface)}
+.tool .grp{display:flex;gap:2px;background:var(--bg);border-radius:8px;padding:2px}
+.tool button{font:inherit;font-size:.82rem;border:0;background:transparent;color:var(--ink);padding:5px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.tool button[aria-pressed="true"]{background:var(--board);box-shadow:0 0 0 1px var(--rule);font-weight:600}
+.tool .plain{border:1px solid var(--rule);background:var(--board)}
+.tool .plain[aria-pressed="true"]{border-color:var(--accent)}
+.tool .sp{flex:1}
+.sw{width:18px;height:18px;border-radius:50%;border:2px solid var(--board);box-shadow:0 0 0 1px var(--rule);padding:0!important}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
+.tool .sw.k,.tool .sw.k[aria-pressed="true"]{background:var(--ink)}.tool .sw.r,.tool .sw.r[aria-pressed="true"]{background:var(--inkR)}.tool .sw.b,.tool .sw.b[aria-pressed="true"]{background:var(--inkB)}
+svg#board{display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}
+svg#board.pen{cursor:crosshair}
+.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:12px 14px}
+.card h2{font-size:.75rem;letter-spacing:.1em;color:var(--muted);margin:0 0 8px;font-weight:600}
+.sec+.sec{margin-top:12px;padding-top:10px;border-top:1px dashed var(--rule)}
+.layers{display:flex;flex-direction:column;gap:5px}
+.layers label{display:flex;align-items:center;gap:8px;cursor:pointer;line-height:1.35}
+.layers input{accent-color:var(--accent);width:16px;height:16px;margin:0;flex:none}
+.chipc{width:12px;height:12px;border-radius:3px;flex:none}
+.chipl{width:16px;height:0;border-top:3px solid;flex:none}
+.chipd{width:9px;height:9px;border-radius:50%;flex:none;margin:0 3.5px}
+.sh{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 8px;margin-bottom:8px}
+.sh h2{margin:0}
+.mini{display:flex;gap:4px}
+.mini button{font:inherit;font-size:.75rem;border:1px solid var(--rule);background:var(--board);color:var(--ink);padding:2px 8px;border-radius:6px;cursor:pointer}
+.mini button:hover{border-color:var(--accent)}
+.cv.sel .stroke{stroke-width:5}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.chips button{font:inherit;font-size:.82rem;border:1px solid var(--rule);background:var(--board);color:var(--ink);padding:3px 9px;border-radius:6px;cursor:pointer}
+.chips button:hover{border-color:var(--accent)}
+.chips .swc{width:22px;height:22px;padding:0;border-radius:50%;background:var(--c);border:2px solid var(--board);box-shadow:0 0 0 1px var(--rule)}
+.chips .swc[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
+.fl{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted)}
+.side input[type="text"]{font:inherit;font-size:.9rem;padding:5px 8px;border:1px solid var(--rule);border-radius:6px;background:var(--board);color:var(--ink);width:100%;min-width:0}
+.side input[type="text"]:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.axin{display:flex;gap:8px}
+.axin label{display:flex;align-items:center;gap:6px;flex:1;min-width:0;font-size:.85rem;color:var(--muted)}
+.empty{font-family:var(--f-ui);font-size:15px;fill:var(--muted)}
+#board .gd,#board .pt,#board .ptl,#board .cl,#board .ax,#board .axt,#board .tick,#board .br,#board .brt,#board .tag,#board .empty,#board .msg,#board .gridl,#board .axis{pointer-events:none}
+.seg{display:flex;flex-wrap:wrap;gap:2px;background:var(--bg);border-radius:8px;padding:2px}
+.seg button{flex:1 1 auto;font:inherit;font-size:.85rem;border:0;background:transparent;color:var(--muted);padding:6px 8px;border-radius:6px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--board);color:var(--ink);font-weight:600;box-shadow:0 0 0 1px var(--rule)}
+.ro{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;margin:0}
+.ro dt{color:var(--muted);font-size:.85rem;line-height:1.35}
+.ro dd{margin:0;font-family:var(--f-num);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.ro .sep{grid-column:1/-1;border-top:1px dashed var(--rule);margin:3px 0}
+.ro .em{font-weight:600;color:var(--ink)}
+.status{display:inline-block;font-size:.85rem;padding:3px 10px;border-radius:12px;margin-bottom:10px;border:1px solid currentColor;line-height:1.35}
+.status.good{color:var(--good)}.status.warn{color:var(--warn)}.status.bad{color:var(--bad)}.status.neutral{color:var(--muted)}
+.acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.acts button{font:inherit;font-size:.82rem;border:1px solid var(--rule);background:var(--board);color:var(--ink);padding:5px 10px;border-radius:7px;cursor:pointer}
+.acts button:hover,.tool .plain:hover{border-color:var(--accent)}
+.hint{color:var(--muted);font-size:.85rem;margin:0}
+.hint b{color:var(--ink);font-weight:600}
+.hint .zh{display:block;margin-top:6px}
+/* SVG */
+.gridl{stroke:var(--grid);stroke-width:1}
+.axis{stroke:var(--ink);stroke-width:2;fill:none}
+.ax{font-family:var(--f-hand);font-size:16px;fill:var(--ink)}
+.ax .num,.tick{font-family:var(--f-num);font-size:11px;fill:var(--muted)}
+.axt{font-family:var(--f-hand);font-size:17px;fill:var(--ink);font-weight:700}
+.cv .stroke{fill:none;stroke:var(--c);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.cv.thin .stroke{stroke-width:2.2}
+.cv.dash .stroke{stroke-dasharray:8 6}
+.cv .hit{fill:none;stroke:transparent;stroke-width:22;pointer-events:stroke}
+.cv[data-drag]{cursor:grab}
+.cv[data-drag]:hover .stroke{stroke-width:4.5}
+.cv.marker .stroke{stroke-width:1.8;stroke-dasharray:3 5}
+.cv.marker:hover .stroke{stroke-width:2.6}
+.knob{fill:var(--c);stroke:var(--board);stroke-width:2}
+.ghost .stroke{stroke-width:2;stroke-dasharray:6 6;opacity:.55}
+.cD{--c:var(--cD)}.cS{--c:var(--cS)}.cMC{--c:var(--cMC)}.cATC{--c:var(--cATC)}.cAVC{--c:var(--cAVC)}.cMR{--c:var(--cMR)}.cP{--c:var(--cP)}
+.cl{font-family:var(--f-hand);font-size:19px;font-weight:700;fill:var(--c)}
+.cl.sm{font-size:15px;font-weight:400}
+.cl.ghost{opacity:.6;font-weight:400}
+.ar{stroke:none;fill-opacity:var(--aop);pointer-events:none}
+.aCS{fill:var(--aCS)}.aPS{fill:var(--aPS)}.aDWL{fill:var(--aDWL)}.aPro{fill:var(--aPro)}.aLoss{fill:var(--aLoss)}
+.tag{font-family:var(--f-hand);font-size:16px;font-weight:700;pointer-events:none;text-anchor:middle}
+.tCS{fill:var(--aCS)}.tPS{fill:var(--aPS)}.tDWL{fill:var(--aDWL)}.tPro{fill:var(--aPro)}.tLoss{fill:var(--aLoss)}
+.gd{stroke:var(--muted);stroke-width:1.3;stroke-dasharray:4 4;fill:none}
+.faint .gd{opacity:.5}
+.pt{fill:var(--ink);stroke:var(--board);stroke-width:2}
+.pt.hollow{fill:var(--board);stroke:var(--muted);stroke-width:2}
+.ptl{font-family:var(--f-hand);font-size:15px;fill:var(--ink)}
+.ptl.small{font-size:13px;fill:var(--muted)}
+.hd{cursor:grab}
+.hd .hhit{fill:transparent}
+.hd .hdot{fill:var(--board);stroke:var(--c);stroke-width:2.5}
+.hd:hover .hdot{fill:var(--c)}
+.br{stroke:var(--ink);stroke-width:1.6}
+.brt{font-family:var(--f-hand);font-size:15px;fill:var(--ink);text-anchor:middle}
+.mk path{fill:var(--ink)}
+.ink{fill:none;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.ink.k{stroke:var(--ink)}.ink.r{stroke:var(--inkR)}.ink.b{stroke:var(--inkB)}
+.msg{font-family:var(--f-ui);font-size:14px;fill:var(--bad)}
+svg.pen .cv[data-drag],svg.pen .hd{cursor:crosshair}
+@media (prefers-reduced-motion:no-preference){.tabs button,.tool button{transition:background .15s}}
+
+/* game theory */
+.gtitle{font-family:var(--f-hand);font-size:24px;font-weight:700;fill:var(--ink)}
+.gplayer{font-family:var(--f-hand);font-size:20px;font-weight:700;fill:var(--c)}
+.gstrat{font-family:var(--f-hand);font-size:18px;fill:var(--ink)}
+.gstrat.zh{font-size:16px;fill:var(--muted)}
+.ggrid{fill:none;stroke:var(--ink);stroke-width:2}
+.gnum{font-family:var(--f-num);font-size:40px;fill:var(--c);font-variant-numeric:tabular-nums}
+.gcomma{font-family:var(--f-num);font-size:34px;fill:var(--muted)}
+.gpay{cursor:pointer}
+.gpay:hover .gnum{text-decoration:underline dotted}
+.gbr{stroke:var(--c);stroke-width:3.5;stroke-linecap:round}
+.gmark{fill:none;stroke:var(--inkR);stroke-width:3}
+.gdom{fill:var(--aPro);fill-opacity:.13}
+.gdomt{font-family:var(--f-ui);font-size:12px;font-weight:600;fill:var(--good)}
+.gne{fill:var(--accent);fill-opacity:.1;stroke:var(--accent);stroke-width:4}
+.gnet{font-family:var(--f-ui);font-size:12px;font-weight:600;fill:var(--accent)}
+.gnote{font-family:var(--f-ui);font-size:13px;fill:var(--muted)}
+.gnote.sm{font-size:12px}
+#board .gtitle,#board .gplayer,#board .gstrat,#board .ggrid,#board .gcomma,#board .gbr,#board .gmark,#board .gdom,#board .gdomt,#board .gne,#board .gnet,#board .gnote{pointer-events:none}
+.story{margin:0 0 10px;font-size:.88rem;line-height:1.5}
+.story .zh,.qa .zh,.ans .zh{display:block;color:var(--muted)}
+.qa{border-top:1px dashed var(--rule);padding:8px 0;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.qa .q{margin:0;font-size:.88rem;line-height:1.45}
+.mini-btn{font:inherit;font-size:.78rem;border:1px solid var(--rule);background:var(--board);color:var(--accent);padding:3px 9px;border-radius:6px;cursor:pointer}
+.mini-btn:hover{border-color:var(--accent)}
+.ans{background:var(--board);border:1px solid var(--rule);border-left:3px solid var(--accent);border-radius:6px;padding:6px 10px;font-size:.84rem;display:flex;flex-direction:column;gap:6px;align-self:stretch}
+.ans p{margin:0;line-height:1.45}
+.payed{border-collapse:collapse;width:100%;font-size:.82rem}
+.payed th{font-weight:600;color:var(--muted);padding:3px;text-align:center}
+.payed td{padding:3px;text-align:center;white-space:nowrap}
+.payed input{width:44px;font:inherit;font-family:var(--f-num);padding:3px 4px;border:1px solid var(--rule);border-radius:5px;background:var(--board);color:var(--ink);text-align:center}
+.payed input.pa{color:var(--cD)}.payed input.pb{color:var(--cS);margin-left:3px}
+.homelink{align-self:flex-start;font-size:.82rem;font-weight:600;color:var(--accent);text-decoration:none;border:1px solid var(--rule);background:var(--surface);padding:3px 12px;border-radius:999px}
+.homelink:hover{border-color:var(--accent)}
+</style>
+</head>
+<body>
+
+
+<div class="app">
+  <a class="homelink" href="index.html">← Home (首頁)</a>
+  <header class="top">
+    <div class="brand">
+      <h1>Micro Econ Board <small>(個經互動畫板)</small></h1>
+      <p>Drag the curves; surplus, profit and DWL update live (拖曲線，剩餘、利潤、無謂損失即時重算)</p>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Graph templates (圖形模板)">
+      <div class="tg"><span>Blank (空白)</span>
+        <button role="tab" data-tpl="free">Free Draw (自由作圖)</button>
+      </div>
+      <div class="tg"><span>Markets &amp; Government (市場與政府)</span>
+        <button role="tab" data-tpl="sd">Supply &amp; Demand (供需與剩餘)</button>
+        <button role="tab" data-tpl="ctl">Price Ceiling / Floor (價格上限／下限)</button>
+        <button role="tab" data-tpl="tax">Tax (國內課稅)</button>
+        <button role="tab" data-tpl="ext">Externalities (外部性)</button>
+      </div>
+      <div class="tg"><span>International Trade (國際貿易)</span>
+        <button role="tab" data-tpl="world">World Price (世界價格)</button>
+        <button role="tab" data-tpl="tariff">Tariff (關稅)</button>
+      </div>
+      <div class="tg"><span>Production &amp; Costs (生產與成本)</span>
+        <button role="tab" data-tpl="prod">Production (生產函數)</button>
+        <button role="tab" data-tpl="tc">Total Cost (總成本)</button>
+        <button role="tab" data-tpl="uc">Unit Cost (平均與邊際成本)</button>
+      </div>
+      <div class="tg"><span>Market Structure (市場結構)</span>
+        <button role="tab" data-tpl="comp">Perfect Competition (完全競爭)</button>
+        <button role="tab" data-tpl="mono">Monopoly (獨占)</button>
+        <button role="tab" data-tpl="natmono">Natural Monopoly (自然獨占)</button>
+        <button role="tab" data-tpl="disc">Price Discrimination (差別取價)</button>
+        <button role="tab" data-tpl="game">Game Theory (賽局理論)</button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="work">
+    <section class="board-wrap" id="boardWrap">
+      <div class="tool">
+        <div class="grp" role="group" aria-label="Tool (工具)">
+          <button id="tDrag" aria-pressed="true"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1v12M1 7h12M7 1 5 3M7 1l2 2M7 13l-2-2M7 13l2-2M1 7l2-2M1 7l2 2M13 7l-2-2M13 7l-2 2" stroke="currentColor" stroke-width="1.4" fill="none"/></svg>Drag (拖曲線)</button>
+          <button id="tPen" aria-pressed="false"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 12l1-3 7-7 2 2-7 7-3 1z" stroke="currentColor" stroke-width="1.4" fill="none"/></svg>Pen (畫筆)</button>
+        </div>
+        <button class="sw k" data-pc="k" aria-pressed="true" aria-label="Black pen (黑筆)"></button>
+        <button class="sw r" data-pc="r" aria-pressed="false" aria-label="Red pen (紅筆)"></button>
+        <button class="sw b" data-pc="b" aria-pressed="false" aria-label="Blue pen (藍筆)"></button>
+        <button class="plain" id="tUndo">Undo (復原一筆)</button>
+        <button class="plain" id="tClear">Clear ink (清除筆跡)</button>
+        <span class="sp"></span>
+        <button class="plain" id="tNums" aria-pressed="false">Values (顯示數值)</button>
+        <button class="plain" id="tFull">Full screen (全螢幕)</button>
+      </div>
+      <svg id="board" viewBox="0 0 640 500" role="img" aria-label="Economics graph board (經濟學圖形畫板)"></svg>
+    </section>
+
+    <aside class="side">
+      <div class="card"><div id="ctrl"></div></div>
+      <div class="card"><h2>VALUES (數值)</h2><div id="ro"></div></div>
+      <div class="card"><h2>HOW TO USE (操作方式)</h2><p class="hint" id="hint"></p></div>
+    </aside>
+  </main>
+</div>
+
+<script>
+(function(){
+/* ---------- frames: each panel maps economic units to SVG pixels ---------- */
+const VW=640,VH=500;
+const FRAMES={
+  main:{x:74,y:26,w:536,h:422,qmax:100,pmax:100,tq:20,tp:20},
+  tc:{x:84,y:26,w:526,h:422,qmax:100,pmax:8000,tq:20,tp:2000},
+  ptop:{x:84,y:22,w:526,h:218,qmax:110,pmax:2400,tq:20,tp:800},
+  pbot:{x:84,y:300,w:526,h:150,qmax:110,pmax:40,tq:20,tp:10}
+};
+const FRM={tc:'tc',prod:'ptop'};
+let FR=FRAMES.main;
+const X=q=>FR.x+q/FR.qmax*FR.w, Y=p=>FR.y+(1-p/FR.pmax)*FR.h;
+const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+const cp=p=>cl(p,-0.8*FR.pmax,1.8*FR.pmax);
+const ok=v=>Number.isFinite(v);
+const f1=v=>ok(v)?(Math.round(v*10)/10).toFixed(1):'—';
+const fA=v=>ok(v)?Math.round(v).toLocaleString('en-US'):'—';
+const fmt=v=>!ok(v)?'—':Math.abs(v)>=1000?fA(v):f1(v);
+const copy=o=>JSON.parse(JSON.stringify(o));
+const r1=v=>v.toFixed(1);
+
+/* ---------- economics ---------- */
+function lf(Ln){const s=(Ln.y2-Ln.y1)/(Ln.x2-Ln.x1),b=Ln.y1-s*Ln.x1;return{s,b,P:q=>b+s*q,Q:p=>(p-b)/s};}
+const lin=(s,b)=>({s,b,P:q=>b+s*q,Q:p=>(p-b)/s});
+function inter(a,b){if(Math.abs(a.s-b.s)<1e-9)return null;const q=(b.b-a.b)/(a.s-b.s);return{q,p:a.P(q)};}
+const same=(a,b)=>{const A=lf(a),B=lf(b);return Math.abs(A.s-B.s)<0.005&&Math.abs(A.b-B.b)<0.3;};
+/* keep a dragged line's handles inside the 0–100 box: clip the infinite line to the box, then inset the ends */
+function fitLine(L){const dx=L.x2-L.x1,dy=L.y2-L.y1;let t0=-1e4,t1=1e4;
+  for(const[p,q]of[[-dx,L.x1],[dx,100-L.x1],[-dy,L.y1],[dy,100-L.y1]]){if(Math.abs(p)<1e-12){if(q<0)return null;continue;}const r=q/p;if(p<0)t0=Math.max(t0,r);else t1=Math.min(t1,r);}
+  if(t1-t0<1e-9)return null;const a=[L.x1+t0*dx,L.y1+t0*dy],b=[L.x1+t1*dx,L.y1+t1*dy];if(Math.hypot(b[0]-a[0],b[1]-a[1])<12)return null;
+  const k=0.05,A=[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k],B=[b[0]-(b[0]-a[0])*k,b[1]-(b[1]-a[1])*k];
+  return A[0]<=B[0]?{x1:A[0],y1:A[1],x2:B[0],y2:B[1]}:{x1:B[0],y1:B[1],x2:A[0],y2:A[1]};}
+const AVC=(q,a)=>a-1.2*q+0.012*q*q, MC=(q,a)=>a-2.4*q+0.036*q*q, ATC=(q,a,F)=>AVC(q,a)+F/q;
+const TVCf=(q,a)=>a*q-1.2*q*q+0.012*q*q*q;
+const TPb=L=>0.6*L*L-0.004*L*L*L, MPb=L=>1.2*L-0.012*L*L, APb=L=>0.6*L-0.004*L*L;
+function root(A,Bc,C){const d=Bc*Bc-4*A*C;if(d<0)return NaN;return(-Bc+Math.sqrt(d))/(2*A);}
+function minATC(a,F){let best={q:1,p:Infinity};for(let q=1;q<=100;q+=0.25){const v=ATC(q,a,F);if(v<best.p)best={q,p:v};}return best;}
+function region(f,g,q0,q1,n=48){if(!(ok(q0)&&ok(q1))||q1-q0<0.05)return null;const up=[],lo=[];
+  for(let i=0;i<=n;i++){const q=q0+(q1-q0)*i/n;const a=f(q);let b=g(q);if(b>a)b=a;up.push([q,a]);lo.push([q,b]);}
+  return up.concat(lo.reverse());}
+function polyArea(P){let s=0;for(let i=0;i<P.length;i++){const[a,b]=P[i],[c,d]=P[(i+1)%P.length];s+=a*d-c*b;}return Math.abs(s)/2;}
+function centroid(P){let A=0,cx=0,cy=0;for(let i=0;i<P.length;i++){const[a,b]=P[i],[c,d]=P[(i+1)%P.length];const k=a*d-c*b;A+=k;cx+=(a+c)*k;cy+=(b+d)*k;}
+  if(Math.abs(A)<1e-6){const n=P.length;return[P.reduce((s,p)=>s+p[0],0)/n,P.reduce((s,p)=>s+p[1],0)/n];}return[cx/(3*A),cy/(3*A)];}
+const tri=(a,b,c)=>[a,b,c];
+
+/* ---------- curve lists, options, scenarios ---------- */
+const lD=['D','Demand D (需求)','--cD'],lS=['S','Supply S (供給)','--cS'],lG=['guide','Guide lines (輔助虛線)','--muted'];
+const lMC=['MC','Marginal cost MC (邊際成本)','--cMC'],lATC=['ATC','Average total cost ATC (平均總成本)','--cATC'],lAVC=['AVC','Average variable cost AVC (平均變動成本)','--cAVC'],lMR=['MR','Marginal revenue MR (邊際收益)','--cMR'];
+const LINES={
+  sd:[lD,lS,lG],
+  ctl:[lD,lS,['price','Controlled price (管制價格)','--cP'],lG],
+  tax:[lD,lS,['shift','After-tax curve S+t / D−t (課稅後曲線)','--cS'],lG],
+  ext:[['D','D = MPB (私人邊際利益)','--cD'],['S','S = MPC (私人邊際成本)','--cS'],['social','MSC / MSB (社會邊際成本／利益)','--cMC'],lG],
+  world:[lD,lS,['pw','World price Pw (世界價格)','--cP'],lG],
+  tariff:[lD,lS,['pw','World price Pw (世界價格)','--cP'],['pt','Pw + tariff (含關稅價格)','--cP'],lG],
+  prod:[['TP','Total product TP (總產量)','--cATC'],['MP','Marginal product MP (邊際產量)','--cMC'],['AP','Average product AP (平均產量)','--cAVC'],['L','Labor marker L (勞動標記線)','--cP'],['tan','Tangent, slope = MP (切線)','--cMC'],['ray','Ray from origin, slope = AP (原點射線)','--cAVC'],['stages','Stages I–III (生產三階段)','--muted'],lG],
+  tc:[['TC','Total cost TC (總成本)','--cATC'],['TVC','Total variable cost TVC (總變動成本)','--cAVC'],['TFC','Total fixed cost TFC (總固定成本)','--cMR'],['q','Output marker q (產量標記線)','--cP'],['tan','Tangent, slope = MC (切線)','--cMC'],['ray','Ray from origin, slope = ATC (原點射線)','--cP'],lG],
+  uc:[lMC,lATC,lAVC,['AFC','Average fixed cost AFC (平均固定成本)','--cMR'],['q','Output marker q (產量標記線)','--cP'],lG],
+  comp:[lMC,lATC,lAVC,['P','Price P = MR = d (價格線)','--cP'],lG],
+  mono:[lD,lMR,lMC,lATC,lG],
+  natmono:[lD,lMR,['MC','Marginal cost MC (邊際成本)','--cMC'],lATC,lG],
+  disc:[lD,lMR,['MC','MC = AC (邊際成本)','--cMC'],lG]
+};
+LINES.free=[lG];
+for(const k in LINES)LINES[k].push(['dots','Points & arrows (標記點與箭頭)','--ink']);
+LINES.game=[];
+const oCS=['cs','Consumer surplus CS (消費者剩餘)','--aCS'],oPS=['ps','Producer surplus PS (生產者剩餘)','--aPS'],oDWL=['dwl','Deadweight loss DWL (無謂損失)','--aDWL'],oTag=['tag','Area labels (區塊標字)','--ink'];
+const OPTS={
+  sd:[oCS,oPS,['ghost','Keep original curves (保留原曲線虛線)','--muted'],oTag],
+  ctl:[oCS,oPS,oDWL,oTag],
+  tax:[oCS,oPS,['rev','Tax revenue (稅收)','--aPro'],oDWL,oTag],
+  ext:[oDWL,oTag],
+  world:[oCS,oPS,['gain','Gains from trade (貿易利得)','--aPro'],oTag],
+  tariff:[oCS,oPS,['rev','Tariff revenue (關稅收入)','--aPro'],oDWL,oTag],
+  prod:[],
+  tc:[['gap','TFC gap between TC and TVC (TC 與 TVC 差距)','--cMR'],['pts','Key points (關鍵點)','--muted']],
+  uc:[['gap','AFC gap between ATC and AVC (ATC 與 AVC 差距)','--cMR'],['pts','Key points (關鍵點)','--muted']],
+  comp:[['area','Profit / loss area (利潤／虧損)','--aPro'],['pts','Shutdown & break-even points (停業點、損益兩平點)','--muted'],oTag],
+  mono:[['profit','Monopoly profit (獨占利潤)','--aPro'],oCS,oDWL,['qc','Competitive outcome (完全競爭對照點)','--muted'],oTag],
+  natmono:[['area','Profit / loss & DWL (利潤／虧損與 DWL)','--aPro'],oCS,oTag],
+  disc:[oCS,['profit','Firm profit (廠商利潤)','--aPro'],oDWL,oTag],
+  free:[['letters','Point letters A, B, C (交點字母)','--ink'],['mins','Curve minimum points (曲線最低點)','--muted']],
+  game:[['br','Underline best responses (最佳反應畫底線)','--ink'],['dom','Dominant strategies (優勢策略)','--aPro'],['ne','Nash equilibrium (納許均衡)','--accent'],['marks','My circles (我的圈選)','--inkR']]
+};
+const KINDS={
+  ctl:[['ceiling','Price ceiling (價格上限)'],['floor','Price floor (價格下限)']],
+  tax:[['seller','Tax on sellers (對賣方課稅)'],['buyer','Tax on buyers (對買方課稅)']],
+  ext:[['neg','Negative (負外部性)'],['pos','Positive (正外部性)']],
+  natmono:[['mono','Unregulated (不管制)'],['mc','P = MC (邊際成本定價)'],['ac','P = AC (平均成本定價)']],
+  disc:[['single','Single price (單一價格)'],['perfect','Perfect discrimination (完全差別取價)']]
+};
+
+const GAMES=[
+ {title:['Pricing Game','手搖飲定價賽局'],A:['Shop A','A 店'],B:['Shop B','B 店'],sa:[['High price','維持高價'],['Low price','降價']],sb:[['High price','維持高價'],['Low price','降價']],
+  unit:['NT$10,000 per month','萬元／月'],extra:'pd',pay:[[[12,12],[4,15]],[[15,4],[6,6]]],
+  story:['Two bubble tea shops on the same street each decide whether to keep a high price or cut prices. They choose at the same time and cannot see each other’s choice. The numbers are monthly profits.','同一條街上的兩家手搖飲店，各自決定要維持高價還是降價。兩家同時決定，看不到對方的選擇。表中數字是每月利潤。']},
+ {title:['Advertising Game','手機廣告賽局'],A:['Brand A','A 品牌'],B:['Brand B','B 品牌'],sa:[['Advertise','打廣告'],['Don’t advertise','不打廣告']],sb:[['Advertise','打廣告'],['Don’t advertise','不打廣告']],
+  unit:['NT$100 million per year','億元／年'],extra:'ban',pay:[[[8,5],[12,6]],[[6,9],[10,7]]],
+  story:['Two phone brands each decide whether to run a big advertising campaign this year. They choose at the same time. The numbers are yearly profits.','兩家手機品牌各自決定今年要不要大打廣告。兩家同時決定，表中數字是年度利潤。']}
+];
+/* ---------- state ---------- */
+const LINE_D={x1:5,y1:90,x2:95,y2:10}, LINE_S={x1:5,y1:10,x2:95,y2:90}, MD={x1:3,y1:93,x2:97,y2:17};
+const showOf=k=>Object.fromEntries(OPTS[k].map(o=>[o[0],true]));
+const linesOf=k=>Object.fromEntries(LINES[k].map(o=>[o[0],true]));
+const BASE={
+  sd:()=>({D:copy(LINE_D),S:copy(LINE_S),base:{D:copy(LINE_D),S:copy(LINE_S)}}),
+  ctl:()=>({D:copy(LINE_D),S:copy(LINE_S),kind:'ceiling',price:35}),
+  tax:()=>({D:copy(LINE_D),S:copy(LINE_S),t:20,kind:'seller'}),
+  ext:()=>({D:copy(LINE_D),S:copy(LINE_S),e:20,kind:'neg'}),
+  world:()=>({D:copy(LINE_D),S:copy(LINE_S),pw:30}),
+  tariff:()=>({D:copy(LINE_D),S:copy(LINE_S),pw:25,t:12}),
+  prod:()=>({s:1,L:60}),
+  tc:()=>({a:60,F:1000,q:60}),
+  uc:()=>({a:60,F:1000,q:60}),
+  comp:()=>({a:60,F:1000,P:55}),
+  mono:()=>({D:copy(MD),a:50,F:1000}),
+  natmono:()=>({D:copy(MD),c:20,F:900,kind:'mono'}),
+  disc:()=>({D:copy(MD),c:25,kind:'single'}),
+  free:()=>({objs:[],nid:1,tool:'line',sel:null,draft:null,yl:'P, C',xl:'Q',trash:null}),
+  game:()=>({prob:0,pay:copy(GAMES.map(g=>g.pay)),marks:{},open:{}})
+};
+const DEF={};for(const k in BASE)DEF[k]=()=>{const o=Object.assign(BASE[k](),{show:showOf(k),lines:linesOf(k),strokes:[]});if(k==='free')o.show.mins=false;if(k==='game'){o.show.br=false;o.show.dom=false;o.show.ne=false;}return o;};
+let G={tpl:'sd',tool:'drag',pen:'k',nums:false,st:{}};
+for(const k in DEF)G.st[k]=DEF[k]();
+const KEY='econ-board-v2';
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&s.st){for(const k in DEF){const o=s.st[k]||{};G.st[k]=Object.assign(DEF[k](),o);G.st[k].show=Object.assign(showOf(k),o.show||{});G.st[k].lines=Object.assign(linesOf(k),o.lines||{});}
+  G.tpl=DEF[s.tpl]?s.tpl:'sd';G.nums=!!s.nums;G.pen=s.pen||'k';}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({st:G.st,tpl:G.tpl,nums:G.nums,pen:G.pen}));}catch(e){}}
+const cur=()=>G.st[G.tpl];
+
+/* ---------- drawing helpers ---------- */
+const svg=document.getElementById('board');
+const ptsStr=P=>P.map(([q,p])=>r1(X(q))+','+r1(Y(cp(p)))).join(' ');
+function fpath(f,q0=0,q1=FR.qmax,n=160){let d='';for(let i=0;i<=n;i++){const q=q0+(q1-q0)*i/n;const p=f(q);if(!ok(p))continue;d+=(d?'L':'M')+r1(X(q))+' '+r1(Y(cp(p)));}return d;}
+function lineD(f){let qa=0,qb=FR.qmax;const lo=-0.8*FR.pmax,hi=1.8*FR.pmax;if(Math.abs(f.s)>1e-9){const A=(lo-f.b)/f.s,Bq=(hi-f.b)/f.s;qa=Math.max(qa,Math.min(A,Bq));qb=Math.min(qb,Math.max(A,Bq));}
+  if(qb<=qa)return'';return`M${r1(X(qa))} ${r1(Y(f.P(qa)))}L${r1(X(qb))} ${r1(Y(f.P(qb)))}`;}
+const frA=fr=>fr?` data-fr="${fr}"`:'';
+function curve(d,cls,drag,key,fr){return`<g class="cv ${cls}"${drag?` data-drag="${drag}" data-key="${key}"`:''}${frA(fr)}><path class="hit" d="${d}"/><path class="stroke" d="${d}"/></g>`;}
+function handle(q,p,key,cls){return`<g class="hd ${cls}" data-drag="end" data-key="${key}"><circle class="hhit" cx="${r1(X(q))}" cy="${r1(Y(p))}" r="16"/><circle class="hdot" cx="${r1(X(q))}" cy="${r1(Y(p))}" r="6.5"/></g>`;}
+function labelAt(f,text,cls,q0=0,q1=FR.qmax,ghost){let last=null;for(let i=0;i<=200;i++){const q=q0+(q1-q0)*i/200,p=f(q);if(ok(p)&&p>=0.04*FR.pmax&&p<=0.96*FR.pmax)last=[q,p];}
+  if(!last)return'';const[q,p]=last;let x=X(q)+8,a='start';if(x>FR.x+FR.w-30){x=X(q)-10;a='end';}
+  return`<text class="cl ${cls}${ghost?' ghost':''}" x="${r1(x)}" y="${r1(Y(p)-8)}" text-anchor="${a}">${text}</text>`;}
+const inPlot=(q,p)=>ok(q)&&ok(p)&&q>=0&&q<=FR.qmax&&p>=0&&p<=FR.pmax;
+function axY(p,t){return`<text class="ax" x="${FR.x-8}" y="${r1(Y(p)+5)}" text-anchor="end">${t}${G.nums?`<tspan class="num" x="${FR.x-8}" dy="13">${fmt(p)}</tspan>`:''}</text>`;}
+function axX(q,t){return`<text class="ax" x="${r1(X(q))}" y="${FR.y+FR.h+20}" text-anchor="middle">${t}${G.nums?`<tspan class="num" x="${r1(X(q))}" dy="14">${f1(q)}</tspan>`:''}</text>`;}
+function guide(q,p,o={}){if(!inPlot(q,p))return'';let s='';
+  if(!o.noY){s+=`<line class="gd" x1="${FR.x}" y1="${r1(Y(p))}" x2="${r1(X(q))}" y2="${r1(Y(p))}"/>`;if(o.pl)s+=axY(p,o.pl);}
+  if(!o.noX){s+=`<line class="gd" x1="${r1(X(q))}" y1="${r1(Y(p))}" x2="${r1(X(q))}" y2="${FR.y+FR.h}"/>`;if(o.ql)s+=axX(q,o.ql);}
+  return`<g class="ln-guide${o.faint?' faint':''}">${s}</g>`;}
+function dot(q,p,label,hollow,small,dx=8,dy=-8,anchor){if(!inPlot(q,p))return'';return`<circle class="pt${hollow?' hollow':''}" cx="${r1(X(q))}" cy="${r1(Y(p))}" r="${small?4.5:5.5}"/>`+(label?`<text class="ptl${small?' small':''}" x="${r1(X(q)+dx)}" y="${r1(Y(p)+dy)}" text-anchor="${anchor||(dx<0?'end':'start')}">${label}</text>`:'');}
+function area(P,cls,tagCls,tag,showTag,lay){if(!P)return;lay.areas+=`<polygon class="ar ${cls}" points="${ptsStr(P)}"/>`;
+  if(showTag&&tag){const pxA=polyArea(P)*(FR.w/FR.qmax)*(FR.h/FR.pmax);if(pxA>900){let[cq,cpp]=centroid(P);cq=cl(cq,3,FR.qmax-3);cpp=cl(cpp,0.03*FR.pmax,0.97*FR.pmax);lay.tags+=`<text class="tag ${tagCls}" x="${r1(X(cq))}" y="${r1(Y(cpp)+6)}">${tag}</text>`;}}}
+function bracket(q1,q2,p,text,below){const y=Y(p)+(below?20:-20);const a=cl(Math.min(q1,q2),0,FR.qmax),b=cl(Math.max(q1,q2),0,FR.qmax);if(!(b-a>1))return'';
+  return`<g class="ln-dots"><line class="br" x1="${r1(X(a)+3)}" y1="${r1(y)}" x2="${r1(X(b)-3)}" y2="${r1(y)}" marker-start="url(#ar)" marker-end="url(#ar)"/><text class="brt" x="${r1((X(a)+X(b))/2)}" y="${r1(y+(below?20:-8))}">${text}</text></g>`;}
+function vbrace(q,p1,p2,text){if(!inPlot(q,p1)||!inPlot(q,p2))return'';const y1=Y(Math.max(p1,p2)),y2=Y(Math.min(p1,p2));if(y2-y1<16)return'';const x=X(q)+14;
+  return`<line class="br" x1="${r1(x)}" y1="${r1(y1+3)}" x2="${r1(x)}" y2="${r1(y2-3)}" marker-start="url(#ar)" marker-end="url(#ar)"/><text class="brt" x="${r1(x+6)}" y="${r1((y1+y2)/2+5)}" style="text-anchor:start">${text}</text>`;}
+const lnOf=cls=>cls.split(' ').filter(c=>c.startsWith('ln-')).join(' ');
+function hl(p,kind,key,cls,label,below,axLabel,fr){return{c:`<g class="cv ${cls}" data-drag="${kind}" data-key="${key}"${frA(fr)}><path class="hit" d="M${FR.x} ${r1(Y(p))}H${FR.x+FR.w}"/><path class="stroke" d="M${FR.x} ${r1(Y(p))}H${FR.x+FR.w}" style="stroke-width:2.6"/></g>`,
+  t:`<text class="cl ${cls}" x="${FR.x+FR.w-6}" y="${r1(Y(p)+(below?20:-8))}" text-anchor="end" style="font-size:16px">${label}</text>`+(axLabel?`<g class="${lnOf(cls)}">${axY(p,axLabel)}</g>`:'')};}
+function vl(q,key,cls,fr){const x=r1(X(q));return`<g class="cv marker ${cls}" data-drag="vline" data-key="${key}"${frA(fr)}><path class="hit" d="M${x} ${FR.y}V${FR.y+FR.h}"/><path class="stroke" d="M${x} ${FR.y}V${FR.y+FR.h}"/><circle class="knob" cx="${x}" cy="${FR.y+7}" r="6"/></g>`;}
+function axes(yt,xt){let s='';
+  for(let v=10;v<=FR.qmax;v+=10){const x=r1(X(v));s+=`<line class="gridl" x1="${x}" y1="${FR.y}" x2="${x}" y2="${FR.y+FR.h}"/>`;}
+  for(let i=1;i<=10;i++){const y=r1(Y(FR.pmax*i/10));s+=`<line class="gridl" x1="${FR.x}" y1="${y}" x2="${FR.x+FR.w}" y2="${y}"/>`;}
+  if(G.nums){for(let v=FR.tq;v<=FR.qmax;v+=FR.tq)s+=`<text class="tick" x="${r1(X(v))}" y="${FR.y+FR.h+46}" text-anchor="middle">${v}</text>`;
+    for(let v=FR.tp;v<=FR.pmax;v+=FR.tp)s+=`<text class="tick" x="${FR.x-46}" y="${r1(Y(v)+4)}" text-anchor="end">${v>=1000?v.toLocaleString('en-US'):v}</text>`;}
+  s+=`<path class="axis" d="M${FR.x} ${FR.y+FR.h}H${FR.x+FR.w+12}" marker-end="url(#ar)"/><path class="axis" d="M${FR.x} ${FR.y+FR.h}V${FR.y-10}" marker-end="url(#ar)"/>`;
+  s+=`<text class="axt" x="${FR.x+10}" y="${FR.y+4}">${yt}</text><text class="axt" x="${FR.x+FR.w+14}" y="${FR.y+FR.h-10}" text-anchor="end">${xt}</text><text class="ax" x="${FR.x-8}" y="${FR.y+FR.h+18}" text-anchor="end">0</text>`;return s;}
+const sub=(a,b)=>`${a}<tspan font-size="12" dy="3">${b}</tspan>`;
+const shift=(Ln,dp)=>({x1:Ln.x1,y1:Ln.y1+dp,x2:Ln.x2,y2:Ln.y2+dp});
+const sgn=v=>(v>=0?'+':'')+fA(v);
+function noEq(lay){lay.tags+=`<text class="msg" x="${FR.x+14}" y="${FR.y+22}">No intersection on the graph (兩線在圖內沒有交點)</text>`;}
+function dsDraw(st,lay,ld='D',ls='S'){const D=lf(st.D),S=lf(st.S);
+  lay.curves+=curve(lineD(D),'cD ln-D','line','D')+curve(lineD(S),'cS ln-S','line','S');
+  lay.tags+=labelAt(D.P,ld,'cD ln-D')+labelAt(S.P,ls,'cS ln-S');
+  lay.handles+=handle(st.D.x1,st.D.y1,'D:1','cD ln-D')+handle(st.D.x2,st.D.y2,'D:2','cD ln-D')+handle(st.S.x1,st.S.y1,'S:1','cS ln-S')+handle(st.S.x2,st.S.y2,'S:2','cS ln-S');
+  const E=inter(D,S);return{D,S,E,valid:!!E&&E.q>0&&E.p>0};}
+function dLine(st,lay){const D=lf(st.D);lay.curves+=curve(lineD(D),'cD ln-D','line','D');lay.tags+=labelAt(D.P,'D','cD ln-D');
+  lay.handles+=handle(st.D.x1,st.D.y1,'D:1','cD ln-D')+handle(st.D.x2,st.D.y2,'D:2','cD ln-D');return D;}
+const CS_=(D,p,q)=>region(D.P,()=>p,0,q), PS_=(S,p,q)=>region(()=>p,x=>Math.max(0,S.P(x)),0,q);
+const R_CS='Consumer surplus CS (消費者剩餘)',R_PS='Producer surplus PS (生產者剩餘)',R_DWL='Deadweight loss DWL (無謂損失)',R_TS='Total surplus (總剩餘)';
+const T_PRO='Profit (利潤)',T_LOSS='Loss (虧損)';
+const atcStatus=(mc,atc)=>mc<atc-0.3?{c:'neutral',t:'MC < ATC: ATC falling (ATC 下降中)'}:mc>atc+0.3?{c:'neutral',t:'MC > ATC: ATC rising (ATC 上升中)'}:{c:'good',t:'MC = ATC: minimum ATC (ATC 最低點)'};
+
+/* ---------- templates ---------- */
+const TPL={};
+TPL.sd=function(st,lay){const rows=[];let status=null;
+  const mD=!same(st.D,st.base.D),mS=!same(st.S,st.base.S),moved=st.show.ghost&&(mD||mS);let E0=null;
+  if(moved){const D0=lf(st.base.D),S0=lf(st.base.S);E0=inter(D0,S0);
+    if(mD){lay.ghost+=curve(lineD(D0),'cD ghost ln-D');lay.tags+=labelAt(D0.P,'D₀','cD ln-D',0,100,true);}
+    if(mS){lay.ghost+=curve(lineD(S0),'cS ghost ln-S');lay.tags+=labelAt(S0.P,'S₀','cS ln-S',0,100,true);}
+    if(E0&&inPlot(E0.q,E0.p)){lay.guides+=guide(E0.q,E0.p,{pl:'P₀',ql:'Q₀',faint:true});lay.points+=dot(E0.q,E0.p,'E₀',true,true,-8,-8);}}
+  const{D,S,E,valid}=dsDraw(st,lay,moved&&mD?'D₁':'D',moved&&mS?'S₁':'S');
+  if(!valid){noEq(lay);return{rows,status,yt:'P',xt:'Q'};}
+  const Rcs=CS_(D,E.p,E.q),Rps=PS_(S,E.p,E.q),cs=polyArea(Rcs||[]),ps=polyArea(Rps||[]);
+  if(st.show.cs)area(Rcs,'aCS','tCS','CS',st.show.tag,lay);
+  if(st.show.ps)area(Rps,'aPS','tPS','PS',st.show.tag,lay);
+  lay.guides+=guide(E.q,E.p,{pl:moved?'P₁':'P*',ql:moved?'Q₁':'Q*'});lay.points+=dot(E.q,E.p,moved?'E₁':'E');
+  rows.push(['Equilibrium price P* (均衡價格)',f1(E.p),'em'],['Equilibrium quantity Q* (均衡數量)',f1(E.q),'em'],'-',[R_CS,fA(cs)],[R_PS,fA(ps)],[R_TS,fA(cs+ps),'em']);
+  if(moved&&E0){const dp=E.p-E0.p,dq=E.q-E0.q;
+    rows.push('-',['Original P₀ / Q₀ (原均衡)',f1(E0.p)+' / '+f1(E0.q)],['Price change ΔP (價格變動)',(dp>=0?'+':'')+f1(dp)],['Quantity change ΔQ (數量變動)',(dq>=0?'+':'')+f1(dq)]);
+    const t=(v,e,z)=>Math.abs(v)<0.3?`${e} unchanged (${z}不變)`:v>0?`${e} rises (${z}上升)`:`${e} falls (${z}下降)`;
+    status={c:'neutral',t:t(dp,'P','價格')+', '+t(dq,'Q','數量')};}
+  return{rows,status,yt:'P',xt:'Q'};
+};
+TPL.ctl=function(st,lay){const rows=[],pr=st.price,ceil=st.kind==='ceiling';let status=null;
+  const{D,S,E,valid}=dsDraw(st,lay);
+  const h=hl(pr,'hline','price','cP ln-price',ceil?'Price ceiling (價格上限)':'Price floor (價格下限)',!ceil,ceil?sub('P','c'):sub('P','f'));lay.curves+=h.c;lay.tags+=h.t;
+  if(!valid){noEq(lay);return{rows,status,yt:'P',xt:'Q'};}
+  const binding=ceil?pr<E.p:pr>E.p;
+  lay.guides+=guide(E.q,E.p,{pl:'P*',ql:'Q*',faint:binding});lay.points+=dot(E.q,E.p,'E',binding,binding);
+  if(binding){const qd=D.Q(pr),qs=Math.max(0,S.Q(pr)),qt=ceil?qs:qd,gap=Math.abs(qd-qs);
+    const Rcs=CS_(D,pr,qt),Rps=PS_(S,pr,qt),Rd=region(D.P,S.P,qt,E.q);
+    const cs=polyArea(Rcs||[]),ps=polyArea(Rps||[]),dwl=polyArea(Rd||[]);
+    if(st.show.cs)area(Rcs,'aCS','tCS','CS',st.show.tag,lay);
+    if(st.show.ps)area(Rps,'aPS','tPS','PS',st.show.tag,lay);
+    if(st.show.dwl)area(Rd,'aDWL','tDWL','DWL',st.show.tag,lay);
+    lay.guides+=guide(qs,pr,{noY:true,ql:sub('Q','s')})+guide(qd,pr,{noY:true,ql:sub('Q','d')});
+    lay.points+=dot(qs,pr,'',false,true)+dot(qd,pr,'',false,true);
+    lay.tags+=bracket(qs,qd,pr,(ceil?'Shortage (短缺) ':'Surplus (過剩) ')+f1(gap),ceil);
+    status=ceil?{c:'bad',t:'Binding ceiling: shortage (有效上限：短缺)'}:{c:'warn',t:'Binding floor: surplus (有效下限：過剩)'};
+    rows.push([ceil?'Price ceiling (價格上限)':'Price floor (價格下限)',f1(pr),'em'],['Equilibrium P* / Q* (原均衡)',f1(E.p)+' / '+f1(E.q)],'-',
+      ['Quantity demanded Qd (需求量)',f1(qd)],['Quantity supplied Qs (供給量)',f1(qs)],[ceil?'Shortage (短缺量)':'Surplus (過剩量)',f1(gap),'em'],['Quantity traded (實際交易量)',f1(qt)],'-',
+      [R_CS,fA(cs)],[R_PS,fA(ps)],[R_DWL,fA(dwl),'em'],[R_TS,fA(cs+ps)]);
+  }else{const Rcs=CS_(D,E.p,E.q),Rps=PS_(S,E.p,E.q),cs=polyArea(Rcs||[]),ps=polyArea(Rps||[]);
+    if(st.show.cs)area(Rcs,'aCS','tCS','CS',st.show.tag,lay);
+    if(st.show.ps)area(Rps,'aPS','tPS','PS',st.show.tag,lay);
+    status={c:'neutral',t:ceil?'Ceiling above P*: not binding (上限高於均衡價，沒有效果)':'Floor below P*: not binding (下限低於均衡價，沒有效果)'};
+    rows.push([ceil?'Price ceiling (價格上限)':'Price floor (價格下限)',f1(pr),'em'],['Market price P* (市場價格)',f1(E.p)],['Quantity Q* (交易量)',f1(E.q)],'-',[R_CS,fA(cs)],[R_PS,fA(ps)],[R_DWL,'0']);}
+  return{rows,status,yt:'P',xt:'Q'};
+};
+TPL.tax=function(st,lay){const t=st.t,seller=st.kind==='seller',rows=[];
+  const{D,S,E,valid}=dsDraw(st,lay);
+  if(seller){const S2=lf(shift(st.S,t));lay.curves+=curve(lineD(S2),'cS dash ln-shift','off','t:1');lay.tags+=labelAt(S2.P,'S + t','cS ln-shift');}
+  else{const D2=lf(shift(st.D,-t));lay.curves+=curve(lineD(D2),'cD dash ln-shift','off','t:-1');lay.tags+=labelAt(D2.P,'D − t','cD ln-shift');}
+  if(!valid){noEq(lay);return{rows,status:null,yt:'P',xt:'Q'};}
+  const qt=(D.b-S.b-t)/(S.s-D.s);
+  if(!(qt>0)){lay.guides+=guide(E.q,E.p,{pl:'P*',ql:'Q*'});return{rows:[['Tax per unit t (每單位稅額)',f1(t)]],status:{c:'bad',t:'Tax too high: no trade (稅額太高，交易量為 0)'},yt:'P',xt:'Q'};}
+  const pb=D.P(qt),ps=S.P(qt);
+  const Rcs=CS_(D,pb,qt),Rps=PS_(S,ps,qt),Rrev=[[0,pb],[qt,pb],[qt,ps],[0,ps]],Rd=tri([qt,pb],[E.q,E.p],[qt,ps]);
+  const cs=polyArea(Rcs||[]),psur=polyArea(Rps||[]),dwl=polyArea(Rd);
+  if(st.show.cs)area(Rcs,'aCS','tCS','CS',st.show.tag,lay);
+  if(st.show.ps)area(Rps,'aPS','tPS','PS',st.show.tag,lay);
+  if(st.show.rev)area(Rrev,'aPro','tPro','Tax revenue (稅收)',st.show.tag,lay);
+  if(st.show.dwl)area(Rd,'aDWL','tDWL','DWL',st.show.tag,lay);
+  lay.guides+=guide(E.q,E.p,{pl:'P*',ql:'Q*',faint:true})+guide(qt,pb,{pl:sub('P','b'),ql:sub('Q','t')})+guide(qt,ps,{pl:sub('P','s'),noX:true});
+  lay.points+=dot(E.q,E.p,'E',true,true)+dot(qt,pb,'',false,true)+dot(qt,ps,'',false,true);
+  const bb=pb-E.p,sb=E.p-ps,bs=t>0?Math.round(bb/t*100):50;
+  rows.push(['Tax per unit t (每單位稅額)',f1(t),'em'],['Quantity after tax Qt (課稅後交易量)',f1(qt)],['Price buyers pay Pb (買方支付)',f1(pb)],['Price sellers receive Ps (賣方實收)',f1(ps)],'-',
+    ['Buyer burden (買方負擔)',f1(bb)+' ('+bs+'%)'],['Seller burden (賣方負擔)',f1(sb)+' ('+(100-bs)+'%)'],'-',
+    [R_CS,fA(cs)],[R_PS,fA(psur)],['Tax revenue (稅收)',fA(t*qt)],[R_DWL,fA(dwl),'em']);
+  return{rows,status:{c:'neutral',t:`Buyers bear ${bs}% (買方負擔), sellers bear ${100-bs}% (賣方負擔)`},yt:'P',xt:'Q'};
+};
+TPL.ext=function(st,lay){const neg=st.kind==='neg',e=st.e,rows=[];
+  const{D,S,E,valid}=dsDraw(st,lay,neg?'D = MPB = MSB':'D = MPB',neg?'S = MPC':'S = MPC = MSC');
+  let So;if(neg){So=lf(shift(st.S,e));lay.curves+=curve(lineD(So),'cMC dash ln-social','off','e:1');lay.tags+=labelAt(So.P,'MSC','cMC ln-social');}
+  else{So=lf(shift(st.D,e));lay.curves+=curve(lineD(So),'cMR dash ln-social','off','e:1');lay.tags+=labelAt(So.P,'MSB','cMR ln-social');}
+  if(!valid){noEq(lay);return{rows,status:null,yt:'P',xt:'Q'};}
+  const qo=neg?(D.b-S.b-e)/(S.s-D.s):(D.b+e-S.b)/(S.s-D.s),po=neg?D.P(qo):S.P(qo);
+  const Rd=neg?tri([qo,po],[E.q,E.p+e],[E.q,E.p]):tri([E.q,E.p],[qo,po],[E.q,E.p+e]);const dwl=e>0.2?polyArea(Rd):0;
+  if(st.show.dwl&&e>0.2)area(Rd,'aDWL','tDWL','DWL',st.show.tag,lay);
+  lay.guides+=guide(E.q,E.p,{pl:sub('P','mkt'),ql:sub('Q','mkt')})+guide(qo,po,{pl:'P*',ql:'Q*'});
+  lay.points+=dot(E.q,E.p,'Market (市場)',false,true,8,neg?18:-8)+dot(qo,po,'Social optimum (社會最適)',true,true,-8,-8);
+  const status=e<=0.2?{c:'neutral',t:'No externality (沒有外部性)'}:neg?{c:'bad',t:'Negative externality: overproduction (負外部性：生產過多)'}:{c:'warn',t:'Positive externality: underproduction (正外部性：生產太少)'};
+  rows.push([neg?'External cost per unit (每單位外部成本)':'External benefit per unit (每單位外部利益)',f1(e),'em'],['Market quantity (市場數量)',f1(E.q)],['Socially optimal quantity (社會最適數量)',f1(qo),'em'],
+    [neg?'Overproduction (過度生產)':'Underproduction (生產不足)',f1(Math.abs(E.q-qo))],'-',[R_DWL,fA(dwl),'em'],[neg?'Pigouvian tax per unit (皮古稅)':'Pigouvian subsidy per unit (皮古補貼)',f1(e)]);
+  return{rows,status,yt:'P',xt:'Q'};
+};
+TPL.world=function(st,lay){const pw=st.pw,rows=[];
+  const{D,S,E,valid}=dsDraw(st,lay);
+  const h=hl(pw,'hline','pw','cP ln-pw','World price (世界價格)',valid&&pw<E.p,sub('P','w'));lay.curves+=h.c;lay.tags+=h.t;
+  if(!valid){noEq(lay);return{rows,status:null,yt:'P',xt:'Q'};}
+  const imp=pw<E.p,qd=D.Q(pw),qs=Math.max(0,S.Q(pw)),trade=Math.abs(pw-E.p)>0.3;
+  const Rcs=CS_(D,pw,qd),Rps=PS_(S,pw,qs),cs=polyArea(Rcs||[]),ps=polyArea(Rps||[]);
+  const cs0=polyArea(CS_(D,E.p,E.q)||[]),ps0=polyArea(PS_(S,E.p,E.q)||[]);
+  if(st.show.cs)area(Rcs,'aCS','tCS','CS',st.show.tag,lay);
+  if(st.show.ps)area(Rps,'aPS','tPS','PS',st.show.tag,lay);
+  if(trade&&st.show.gain)area(tri([qs,pw],[E.q,E.p],[qd,pw]),'aPro','tPro','Gains (貿易利得)',st.show.tag,lay);
+  lay.guides+=guide(E.q,E.p,{pl:'P*',noX:true,faint:true});lay.points+=dot(E.q,E.p,'E',true,true);
+  if(trade){lay.guides+=guide(qs,pw,{noY:true,ql:sub('Q','s')})+guide(qd,pw,{noY:true,ql:sub('Q','d')});
+    lay.points+=dot(qs,pw,'',false,true)+dot(qd,pw,'',false,true);
+    lay.tags+=bracket(qs,qd,pw,(imp?'Imports (進口) ':'Exports (出口) ')+f1(Math.abs(qd-qs)),imp);}
+  const status=!trade?{c:'neutral',t:'Pw = P*: no trade (沒有貿易)'}:imp?{c:'neutral',t:'Pw < P*: importer (進口國)'}:{c:'neutral',t:'Pw > P*: exporter (出口國)'};
+  rows.push(['World price Pw (世界價格)',f1(pw),'em'],['Domestic equilibrium P* (國內均衡價格)',f1(E.p)],'-',['Domestic demand Qd (國內需求量)',f1(qd)],['Domestic supply Qs (國內供給量)',f1(qs)],[imp?'Imports (進口量)':'Exports (出口量)',f1(Math.abs(qd-qs)),'em'],'-',
+    [R_CS,fA(cs)+' ('+sgn(cs-cs0)+')'],[R_PS,fA(ps)+' ('+sgn(ps-ps0)+')'],[R_TS,fA(cs+ps)],['Autarky total surplus (封閉經濟總剩餘)',fA(cs0+ps0)],['Gains from trade (貿易利得)',fA(cs+ps-cs0-ps0),'em']);
+  return{rows,status,yt:'P',xt:'Q'};
+};
+TPL.tariff=function(st,lay){const pw=st.pw,rows=[];
+  const{D,S,E,valid}=dsDraw(st,lay);
+  const h1=hl(pw,'hline','pw','cP ln-pw','World price (世界價格)',true,sub('P','w'));lay.curves+=h1.c;lay.tags+=h1.t;
+  if(!valid){noEq(lay);return{rows,status:null,yt:'P',xt:'Q'};}
+  if(pw>=E.p){lay.guides+=guide(E.q,E.p,{pl:'P*',ql:'Q*'});lay.points+=dot(E.q,E.p,'E');
+    return{rows:[['World price Pw (世界價格)',f1(pw)],['Domestic equilibrium P* (國內均衡價格)',f1(E.p)]],status:{c:'neutral',t:'Pw ≥ P*: no imports, tariff has no effect (不會進口，關稅無作用)'},yt:'P',xt:'Q'};}
+  const pt=pw+st.t,pe=Math.min(pt,E.p),prohib=pt>=E.p;
+  const h2=hl(pt,'tline','t','cP ln-pt','Pw + tariff (含關稅價格)',false,sub('P','w')+'+t');lay.curves+=h2.c;lay.tags+=h2.t;
+  const qs1=Math.max(0,S.Q(pw)),qd1=D.Q(pw),qs2=Math.max(0,S.Q(pe)),qd2=D.Q(pe);
+  const Rcs=CS_(D,pe,qd2),Rps=PS_(S,pe,qs2),Rrev=qd2-qs2>0.05?[[qs2,pw],[qd2,pw],[qd2,pe],[qs2,pe]]:null;
+  const R1=tri([qs1,pw],[qs2,pw],[qs2,pe]),R2=tri([qd2,pe],[qd2,pw],[qd1,pw]);
+  const cs=polyArea(Rcs||[]),ps=polyArea(Rps||[]),rev=Rrev?polyArea(Rrev):0,d1=polyArea(R1),d2=polyArea(R2);
+  if(st.show.cs)area(Rcs,'aCS','tCS','CS',st.show.tag,lay);
+  if(st.show.ps)area(Rps,'aPS','tPS','PS',st.show.tag,lay);
+  if(st.show.rev&&Rrev)area(Rrev,'aPro','tPro','Revenue (關稅收入)',st.show.tag,lay);
+  if(st.show.dwl){area(R1,'aDWL','','',false,lay);area(R2,'aDWL','','',false,lay);
+    if(st.show.tag&&d1+d2>8)lay.tags+=`<text class="tag tDWL" x="${r1(X(qs1)-6)}" y="${r1(Y(pw)+22)}" style="text-anchor:end">DWL</text><text class="tag tDWL" x="${r1(X(qd1)+6)}" y="${r1(Y(pw)+22)}" style="text-anchor:start">DWL</text>`;}
+  lay.guides+=guide(qs1,pw,{noY:true,ql:sub('Q','s1')})+guide(qd1,pw,{noY:true,ql:sub('Q','d1')})+guide(qs2,pe,{noY:true,ql:sub('Q','s2')})+guide(qd2,pe,{noY:true,ql:sub('Q','d2')});
+  lay.points+=dot(E.q,E.p,'E',true,true)+dot(qs1,pw,'',false,true)+dot(qd1,pw,'',false,true)+dot(qs2,pe,'',false,true)+dot(qd2,pe,'',false,true);
+  const status=prohib?{c:'bad',t:'Prohibitive tariff: imports stop (禁止性關稅：進口停止)'}:{c:'warn',t:'Tariff: imports fall, domestic price rises (進口減少，國內價格上升)'};
+  rows.push(['World price Pw (世界價格)',f1(pw)],['Tariff per unit t (每單位關稅)',f1(st.t),'em'],['Domestic price after tariff (課稅後國內價格)',f1(pe)],'-',
+    ['Imports before tariff (課稅前進口量)',f1(qd1-qs1)],['Imports after tariff (課稅後進口量)',f1(Math.max(0,qd2-qs2)),'em'],'-',
+    [R_CS,fA(cs)],[R_PS,fA(ps)],['Tariff revenue (關稅收入)',fA(rev)],['DWL, production side (生產面)',fA(d1)],['DWL, consumption side (消費面)',fA(d2)],['Total DWL (DWL 合計)',fA(d1+d2),'em']);
+  return{rows,status,yt:'P',xt:'Q'};
+};
+TPL.prod=function(st,lay){const s=st.s,Lv=st.L,rows=[];
+  const TP=L=>s*TPb(L),MP=L=>s*MPb(L),AP=L=>L>0.5?s*APb(L):NaN;const tp=TP(Lv),mp=MP(Lv),ap=AP(Lv);
+  FR=FRAMES.ptop;
+  const tan=lin(mp,tp-mp*Lv),ray=lin(ap,0);
+  lay.curves+=curve(lineD(tan),'cMC thin dash ln-tan')+curve(lineD(ray),'cAVC thin dash ln-ray');
+  lay.tags+=labelAt(tan.P,'slope = MP (斜率)','cMC sm ln-tan',0,110)+labelAt(ray.P,'slope = AP (斜率)','cAVC sm ln-ray',0,110);
+  lay.curves+=curve(fpath(TP,0,110),'cATC ln-TP','scale','TP','ptop')+vl(Lv,'L','cP ln-L','ptop');
+  lay.tags+=labelAt(TP,'TP','cATC ln-TP',0,110);
+  lay.guides+=guide(Lv,tp,{pl:'TP',noX:true});lay.points+=dot(Lv,tp,'',false);
+  let sg='';
+  for(const Lb of[75,100])sg+=`<line class="gd" x1="${r1(X(Lb))}" y1="${FR.y}" x2="${r1(X(Lb))}" y2="${FR.y+FR.h}"/>`;
+  sg+=`<text class="ptl small" x="${r1(X(37.5))}" y="${FR.y+18}" text-anchor="middle">Stage I (第一階段)</text><text class="ptl small" x="${r1(X(87.5))}" y="${FR.y+18}" text-anchor="middle">Stage II (第二階段)</text><text class="ptl small" x="${r1(X(105))}" y="${FR.y+18}" text-anchor="middle">III</text>`;
+  let sd=dot(50,TP(50),'Inflection (反曲點)',true,true,8,16)+dot(100,TP(100),'TP max (最大)',true,true,-8,26);
+  FR=FRAMES.pbot;
+  lay.extra+=curve(fpath(MP,0,110),'cMC ln-MP','scale','MP','pbot')+curve(fpath(AP,1,110),'cAVC ln-AP','scale','AP','pbot')+vl(Lv,'L','cP ln-L','pbot');
+  lay.tags+=labelAt(MP,'MP','cMC ln-MP',0,110)+labelAt(AP,'AP','cAVC ln-AP',1,110);
+  for(const Lb of[75,100])sg+=`<line class="gd" x1="${r1(X(Lb))}" y1="${FR.y}" x2="${r1(X(Lb))}" y2="${FR.y+FR.h}"/>`;
+  sd+=dot(50,MP(50),'MP max',true,true,0,-10,'middle')+dot(75,AP(75),'AP max = MP',true,true,8,-8);
+  lay.guides+=`<g class="ln-stages">${sg}</g>`;lay.points+=`<g class="ln-stages">${sd}</g>`;
+  lay.guides+=guide(Lv,Math.max(0,mp),{pl:'MP',ql:'L'})+guide(Lv,ap,{pl:'AP',noX:true});
+  lay.points+=dot(Lv,mp,'',false,true)+dot(Lv,ap,'',false,true);
+  const stage=Lv<75?{c:'good',t:'Stage I: AP rising (第一階段：AP 上升)'}:Lv<=100?{c:'neutral',t:'Stage II: MP falling, still positive (第二階段：合理生產區)'}:{c:'bad',t:'Stage III: MP < 0 (第三階段：MP 為負)'};
+  rows.push(['Labor L (勞動投入)',f1(Lv),'em'],['Total product TP (總產量)',fA(tp),'em'],['Marginal product MP (邊際產量)',f1(mp)],['Average product AP (平均產量)',f1(ap)],'-',
+    ['MP vs AP',mp>ap+0.05?'MP > AP → AP ↑':mp<ap-0.05?'MP < AP → AP ↓':'MP = AP'],['Diminishing returns (邊際報酬遞減)',Lv>50?'Yes (是)':'Not yet (尚未)'],['Technology scale (技術水準)',Math.round(s*100)+'%']);
+  return{rows,status:stage,axes:[{fr:'ptop',yt:'TP',xt:'L'},{fr:'pbot',yt:'MP, AP',xt:'L'}],clipB:'pbot'};
+};
+TPL.tc=function(st,lay){const a=st.a,F=st.F,q=st.q,rows=[];
+  const TVC=x=>TVCf(x,a),TC=x=>TVCf(x,a)+F;const tvc=TVC(q),tc=TC(q),mc=MC(q,a),atc=tc/q,avc=tvc/q;
+  const tan=lin(mc,tc-mc*q),ray=lin(atc,0);
+  lay.curves+=curve(lineD(tan),'cMC thin dash ln-tan')+curve(lineD(ray),'cP thin dash ln-ray');
+  lay.tags+=labelAt(tan.P,'slope = MC (斜率)','cMC sm ln-tan')+labelAt(ray.P,'slope = ATC (斜率)','cP sm ln-ray');
+  const h=hl(F,'tfc','F','cMR ln-TFC','TFC',false);lay.curves+=h.c;lay.tags+=h.t;
+  lay.curves+=curve(fpath(TVC,0,100),'cAVC ln-TVC','tvc','a')+curve(fpath(TC,0,100),'cATC ln-TC','tcd','a')+vl(q,'q','cP ln-q');
+  lay.tags+=labelAt(TVC,'TVC','cAVC ln-TVC')+labelAt(TC,'TC','cATC ln-TC');
+  lay.guides+=guide(q,tc,{pl:'TC'})+guide(q,tvc,{pl:'TVC',ql:'q'});
+  lay.points+=dot(q,tc,'',false)+dot(q,tvc,'',false,true)+dot(q,F,'',false,true);
+  if(st.show.gap)lay.tags+=vbrace(q,tvc,tc,'TFC');
+  const m=minATC(a,F);
+  if(st.show.pts)lay.points+=dot(100/3,TC(100/3),'Inflection: min MC (反曲點)',true,true,-10,-10)+dot(m.q,TC(m.q),'Ray tangent: min ATC (射線切點)',true,true,10,22);
+  rows.push(['Output q (產量)',f1(q),'em'],['Total fixed cost TFC (總固定成本)',fA(F)],['Total variable cost TVC (總變動成本)',fA(tvc)],['Total cost TC (總成本)',fA(tc),'em'],'-',
+    ['MC = slope of tangent (切線斜率)',f1(mc)],['ATC = TC / q (射線斜率)',f1(atc)],['AVC = TVC / q',f1(avc)],['AFC = TFC / q',f1(F/q)]);
+  return{rows,status:atcStatus(mc,atc),yt:'TC, TVC, TFC',xt:'q'};
+};
+TPL.uc=function(st,lay){const a=st.a,F=st.F,q=st.q,rows=[];
+  const atc=ATC(q,a,F),avc=AVC(q,a),afc=F/q,mc=MC(q,a);
+  lay.curves+=curve(fpath(x=>F/x,2,100),'cMR ln-AFC','afc','F')+curve(fpath(x=>ATC(x,a,F),3,100),'cATC ln-ATC','atc','ATC')+curve(fpath(x=>AVC(x,a),0,100),'cAVC ln-AVC','shift','AVC')+curve(fpath(x=>MC(x,a),0,100),'cMC ln-MC','shift','MC')+vl(q,'q','cP ln-q');
+  lay.tags+=labelAt(x=>F/x,'AFC','cMR ln-AFC',2,100)+labelAt(x=>ATC(x,a,F),'ATC','cATC ln-ATC',3,100)+labelAt(x=>AVC(x,a),'AVC','cAVC ln-AVC')+labelAt(x=>MC(x,a),'MC','cMC ln-MC');
+  lay.guides+=guide(q,mc,{pl:'MC',ql:'q'})+guide(q,atc,{pl:'ATC',noX:true})+guide(q,avc,{pl:'AVC',noX:true})+guide(q,afc,{pl:'AFC',noX:true});
+  lay.points+=dot(q,mc,'',false,true)+dot(q,atc,'',false,true)+dot(q,avc,'',false,true)+dot(q,afc,'',false,true);
+  if(st.show.gap)lay.tags+=vbrace(q,avc,atc,'AFC');
+  const m=minATC(a,F);
+  if(st.show.pts)lay.points+=dot(50,a-30,'min AVC = MC',true,true,0,22,'middle')+dot(m.q,m.p,'min ATC = MC',true,true,10,-10);
+  rows.push(['Output q (產量)',f1(q),'em'],['Marginal cost MC (邊際成本)',f1(mc)],['Average total cost ATC (平均總成本)',f1(atc),'em'],['Average variable cost AVC (平均變動成本)',f1(avc)],['Average fixed cost AFC (平均固定成本)',f1(afc)],'-',
+    ['ATC = AVC + AFC',f1(avc)+' + '+f1(afc)],['Minimum AVC (最低 AVC)',f1(a-30)],['Minimum ATC (最低 ATC)',f1(m.p)],['Fixed cost TFC (總固定成本)',fA(F)]);
+  return{rows,status:atcStatus(mc,atc),yt:'Cost (成本)',xt:'q'};
+};
+function costCurves(st,lay){const a=st.a,F=st.F;
+  lay.curves+=curve(fpath(q=>ATC(q,a,F),3,100),'cATC ln-ATC','atc','ATC')+curve(fpath(q=>AVC(q,a),0,100),'cAVC thin ln-AVC','shift','AVC')+curve(fpath(q=>MC(q,a),0,100),'cMC ln-MC','shift','MC');
+  lay.tags+=labelAt(q=>ATC(q,a,F),'ATC','cATC ln-ATC',3,100)+labelAt(q=>AVC(q,a),'AVC','cAVC ln-AVC')+labelAt(q=>MC(q,a),'MC','cMC ln-MC');}
+TPL.comp=function(st,lay){const a=st.a,F=st.F,P=st.P,rows=[];let status;
+  const avcMin={q:50,p:a-30},atcMin=minATC(a,F),qs=P>=avcMin.p?root(0.036,-2.4,a-P):0;
+  costCurves(st,lay);
+  const h=hl(P,'hline','P','cP ln-P','P = MR = d',false,'P');lay.curves+=h.c;lay.tags+=h.t;
+  let atc=NaN,avc=NaN,pi=-F;
+  if(qs>0){atc=ATC(qs,a,F);avc=AVC(qs,a);pi=(P-atc)*qs;
+    if(st.show.area){const prof=P>=atc;area([[0,P],[qs,P],[qs,atc],[0,atc]],prof?'aPro':'aLoss',prof?'tPro':'tLoss',prof?T_PRO:T_LOSS,st.show.tag,lay);}
+    lay.guides+=guide(qs,P,{noY:true,ql:'q*'})+guide(qs,atc,{pl:'ATC',noX:true});lay.points+=dot(qs,P,'',false)+dot(qs,atc,'',false,true);}
+  if(st.show.pts)lay.points+=dot(avcMin.q,avcMin.p,'Shutdown (停業點)',true,true,0,22,'middle')+dot(atcMin.q,atcMin.p,'Break-even (損益兩平點)',true,true,10,-8);
+  if(qs<=0)status={c:'bad',t:'P < min AVC: shut down (停業)'};
+  else if(P>=atcMin.p+0.05)status={c:'good',t:'P > ATC: economic profit (有經濟利潤)'};
+  else if(P>=atcMin.p-0.05)status={c:'neutral',t:'P = min ATC: break-even (損益兩平)'};
+  else status={c:'warn',t:'AVC < P < ATC: loss, keep producing (虧損但繼續生產)'};
+  rows.push(['Price P = MR (價格)',f1(P),'em'],['Optimal output q* (最適產量)',qs>0?f1(qs):'0','em'],'-',['ATC at q*',f1(atc)],['AVC at q*',f1(avc)],['Total revenue TR (總收益)',fA(P*qs)],['Total cost TC (總成本)',qs>0?fA(atc*qs):fA(F)],['Profit π (利潤)',fA(pi),'em'],'-',
+    ['Shutdown price, min AVC (停業點)',f1(avcMin.p)],['Break-even price, min ATC (損益兩平點)',f1(atcMin.p)],['Fixed cost TFC (固定成本)',fA(F)]);
+  return{rows,status,yt:'P, Cost',xt:'q'};
+};
+TPL.mono=function(st,lay){const a=st.a,F=st.F,rows=[];let status;
+  costCurves(st,lay);
+  const D=lf(st.D),MR=q=>D.b+2*D.s*q;
+  lay.curves+=curve(fpath(MR,0,100,2),'cMR thin ln-MR');lay.tags+=labelAt(MR,'MR','cMR ln-MR');dLine(st,lay);
+  const Qm=root(0.036,-2.4-2*D.s,a-D.b),Qc=root(0.036,-2.4-D.s,a-D.b);
+  if(!(Qm>0))return{rows:[['Output (產量)','0']],status:{c:'bad',t:'MR < MC everywhere: no output (不生產)'},yt:'P, Cost',xt:'Q'};
+  const Pm=D.P(Qm),mc=MC(Qm,a),atc=ATC(Qm,a,F),pi=(Pm-atc)*Qm,Pc=D.P(Qc);
+  const Rcs=CS_(D,Pm,Qm),Rd=region(D.P,q=>MC(q,a),Qm,Qc),cs=polyArea(Rcs||[]),dwl=polyArea(Rd||[]);
+  if(st.show.cs)area(Rcs,'aCS','tCS','CS',st.show.tag,lay);
+  if(st.show.dwl)area(Rd,'aDWL','tDWL','DWL',st.show.tag,lay);
+  if(st.show.profit){const prof=Pm>=atc;area([[0,Pm],[Qm,Pm],[Qm,atc],[0,atc]],prof?'aPro':'aLoss',prof?'tPro':'tLoss',prof?T_PRO:T_LOSS,st.show.tag,lay);}
+  lay.guides+=guide(Qm,Pm,{pl:sub('P','m'),ql:sub('Q','m')})+guide(Qm,atc,{pl:'ATC',noX:true});
+  lay.points+=dot(Qm,Pm,'',false)+dot(Qm,mc,'MR = MC',false,true,8,16)+dot(Qm,atc,'',false,true);
+  if(st.show.qc&&Qc>0){lay.guides+=guide(Qc,Pc,{pl:sub('P','c'),ql:sub('Q','c'),faint:true});lay.points+=dot(Qc,Pc,'Competitive (完全競爭)',true,true);}
+  status=pi>0.5?{c:'good',t:'P > ATC: monopoly profit (獨占利潤)'}:pi<-0.5?{c:'warn',t:'P < ATC: short-run loss (短期虧損)'}:{c:'neutral',t:'P = ATC: zero profit (零利潤)'};
+  rows.push(['Monopoly output Qm (獨占產量)',f1(Qm),'em'],['Monopoly price Pm (獨占價格)',f1(Pm),'em'],['MR = MC',f1(mc)],['ATC at Qm',f1(atc)],['Profit π (利潤)',fA(pi),'em'],'-',
+    [R_CS,fA(cs)],[R_DWL,fA(dwl),'em'],['Markup (P−MC)/P (加價率)',Pm>0?(Math.round((Pm-mc)/Pm*1000)/10).toFixed(1)+'%':'—'],'-',['Competitive Qc / Pc (完全競爭)',f1(Qc)+' / '+f1(Pc)]);
+  return{rows,status,yt:'P, Cost',xt:'Q'};
+};
+TPL.natmono=function(st,lay){const c=st.c,F=st.F,rows=[];const AC=q=>F/q+c;
+  lay.curves+=curve(fpath(AC,2,100),'cATC ln-ATC','nmatc','F');lay.tags+=labelAt(AC,'ATC','cATC ln-ATC',2,100);
+  const h=hl(c,'hline','c','cMC ln-MC','MC',true);lay.curves+=h.c;lay.tags+=h.t;
+  const D=lf(st.D),MR=q=>D.b+2*D.s*q;lay.curves+=curve(fpath(MR,0,100,2),'cMR thin ln-MR');lay.tags+=labelAt(MR,'MR','cMR ln-MR');dLine(st,lay);
+  const Qm=(c-D.b)/(2*D.s),Pm=D.P(Qm),Qmc=(c-D.b)/D.s,disc=(D.b-c)**2+4*D.s*F,Qac=disc>=0?(-(D.b-c)-Math.sqrt(disc))/(2*D.s):NaN,Pac=D.P(Qac);
+  if(!(Qm>0))return{rows:[['Output (產量)','0']],status:{c:'bad',t:'Demand below MC: no output (不生產)'},yt:'P, Cost',xt:'Q'};
+  const k=st.kind;let Q,P,cs=0,dwl=0,pi;
+  if(k==='mono'){Q=Qm;P=Pm;pi=(Pm-AC(Qm))*Qm;
+    if(st.show.area)area([[0,Pm],[Qm,Pm],[Qm,AC(Qm)],[0,AC(Qm)]],pi>=0?'aPro':'aLoss',pi>=0?'tPro':'tLoss',pi>=0?T_PRO:T_LOSS,st.show.tag,lay);
+    const Rd=tri([Qm,Pm],[Qmc,c],[Qm,c]);dwl=polyArea(Rd);if(st.show.area)area(Rd,'aDWL','tDWL','DWL',st.show.tag,lay);
+    lay.guides+=guide(Qm,AC(Qm),{pl:'ATC',noX:true});lay.points+=dot(Qm,AC(Qm),'',false,true);}
+  else if(k==='mc'){Q=Qmc;P=c;pi=(c-AC(Qmc))*Qmc;
+    if(st.show.area)area([[0,AC(Qmc)],[Qmc,AC(Qmc)],[Qmc,c],[0,c]],'aLoss','tLoss','Loss = subsidy (虧損需補貼)',st.show.tag,lay);
+    lay.guides+=guide(Qmc,AC(Qmc),{pl:'ATC',noX:true});lay.points+=dot(Qmc,AC(Qmc),'',false,true);}
+  else{Q=Qac;P=Pac;pi=0;if(ok(Qac)){const Rd=tri([Qac,Pac],[Qmc,c],[Qac,c]);dwl=polyArea(Rd);if(st.show.area)area(Rd,'aDWL','tDWL','DWL',st.show.tag,lay);}}
+  if(ok(Q)){const Rcs=CS_(D,P,Q);cs=polyArea(Rcs||[]);if(st.show.cs)area(Rcs,'aCS','tCS','CS',st.show.tag,lay);
+    lay.guides+=guide(Q,P,{pl:'P',ql:'Q'});lay.points+=dot(Q,P,'',false);}
+  lay.points+=dot(Qm,Pm,k==='mono'?'':'Monopoly (獨占)',true,true)+dot(Qmc,c,k==='mc'?'':'P = MC',true,true,6,-8)+(ok(Qac)?dot(Qac,Pac,k==='ac'?'':'P = AC',true,true):'');
+  const status=k==='mono'?{c:'warn',t:'Unregulated: high price, low output (價格高、產量少)'}:k==='mc'?{c:'bad',t:'P = MC: efficient but firm loses money (有效率但廠商虧損)'}:ok(Qac)?{c:'good',t:'P = AC: zero profit, small DWL (零利潤，仍有少量 DWL)'}:{c:'bad',t:'No price covers AC (任何價格都無法回本)'};
+  rows.push(['This policy Q / P (此方案)',f1(Q)+' / '+f1(P),'em'],['Firm profit (廠商利潤)',fA(pi),'em'],[R_CS,fA(cs)],[R_DWL,fA(dwl)],'-',
+    ['Unregulated Q / P (不管制)',f1(Qm)+' / '+f1(Pm)],['P = MC: Q / P',f1(Qmc)+' / '+f1(c)],['P = AC: Q / P',f1(Qac)+' / '+f1(Pac)],['Fixed cost (固定成本)',fA(F)]);
+  return{rows,status,yt:'P, Cost',xt:'Q'};
+};
+TPL.disc=function(st,lay){const c=st.c,rows=[],single=st.kind==='single';
+  const h=hl(c,'hline','c','cMC ln-MC','MC = AC',true);lay.curves+=h.c;lay.tags+=h.t;
+  const D=lf(st.D),MR=q=>D.b+2*D.s*q;
+  lay.curves+=curve(fpath(MR,0,100,2),'cMR thin ln-MR');lay.tags+=labelAt(MR,'MR','cMR ln-MR');dLine(st,lay);
+  const Qm=(c-D.b)/(2*D.s),Pm=D.P(Qm),Qc=(c-D.b)/D.s;
+  if(!(Qm>0))return{rows:[['Output (產量)','0']],status:{c:'bad',t:'Demand below MC: no output (不生產)'},yt:'P, Cost',xt:'Q'};
+  const Rcs1=CS_(D,Pm,Qm),cs1=polyArea(Rcs1||[]),pi1=(Pm-c)*Qm,Rd=tri([Qm,Pm],[Qc,c],[Qm,c]),dwl1=polyArea(Rd),Rall=region(D.P,()=>c,0,Qc),pi2=polyArea(Rall||[]);
+  if(single){
+    if(st.show.cs)area(Rcs1,'aCS','tCS','CS',st.show.tag,lay);
+    if(st.show.profit)area([[0,Pm],[Qm,Pm],[Qm,c],[0,c]],'aPro','tPro',T_PRO,st.show.tag,lay);
+    if(st.show.dwl)area(Rd,'aDWL','tDWL','DWL',st.show.tag,lay);
+    lay.guides+=guide(Qm,Pm,{pl:sub('P','m'),ql:sub('Q','m')});lay.points+=dot(Qm,Pm,'',false)+dot(Qm,c,'MR = MC',false,true,8,16);
+  }else{
+    if(st.show.profit)area(Rall,'aPro','tPro',T_PRO,st.show.tag,lay);
+    let stair='';const n=12;for(let i=0;i<n;i++){const q0=Qc*i/n,q1=Qc*(i+1)/n,p=D.P(q0);stair+=`M${r1(X(q0))} ${r1(Y(c))}V${r1(Y(cp(p)))}H${r1(X(q1))}`;}
+    lay.areas+=`<path class="gd" d="${stair}"/>`;
+    lay.guides+=guide(Qc,c,{noY:true,ql:'Q*'});lay.points+=dot(Qc,c,'P = MC',false,true,8,-8);}
+  const status=single?{c:'warn',t:'Single price: DWL exists (單一價格：有無謂損失)'}:{c:'good',t:'Perfect discrimination: no DWL, CS goes to firm (無 DWL，CS 全歸廠商)'};
+  rows.push(['Single price Q / P (單一價格)',f1(Qm)+' / '+f1(Pm)],['· Profit (利潤)',fA(pi1),single?'em':''],['· CS (消費者剩餘)',fA(cs1)],['· DWL (無謂損失)',fA(dwl1)],'-',
+    ['Perfect discrimination Q (完全差別取價)',f1(Qc)],['· Profit (利潤)',fA(pi2),single?'':'em'],['· CS (消費者剩餘)','0'],['· DWL (無謂損失)','0']);
+  return{rows,status,yt:'P, Cost',xt:'Q'};
+};
+
+/* ---------- free draw ---------- */
+const escH=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const escA=t=>escH(t).replace(/"/g,'&quot;');
+const FCOL={D:'cD',S:'cS',MC:'cMC',ATC:'cATC',AVC:'cAVC',MR:'cMR',AFC:'cMR',P:'cP','P = MR':'cP'};
+const PAL=['cD','cS','cMC','cATC','cAVC','cMR','cP'];
+const QL=['D','S','MR','P = MR','MC','ATC','AVC','AFC'];
+const FT=[['select','Select / move (選取移動)'],['line','Line (直線)'],['u','U curve (U 形)'],['check','MC curve (勾形)']];
+function autoLabel(st,type){const used=new Set(st.objs.map(o=>o.label));const pool=type==='line'?['D','S','P = MR']:type==='u'?['ATC','AVC']:['MC'];return pool.find(l=>!used.has(l))||'';}
+function fEval(o){if(o.type==='line'){if(Math.abs(o.x2-o.x1)<1e-6)return{vert:true,q:o.x1,p0:Math.min(o.y1,o.y2),p1:Math.max(o.y1,o.y2)};
+    const sl=(o.y2-o.y1)/(o.x2-o.x1);return{lo:Math.min(o.x1,o.x2),hi:Math.max(o.x1,o.x2),f:q=>o.y1+sl*(q-o.x1)};}
+  const r=o.type==='check'?0.3:1;return{lo:0,hi:100,f:q=>o.k+o.a*(q<o.h?r:1)*(q-o.h)*(q-o.h)};}
+function fInter(A,B){const out=[];if(A.vert&&B.vert)return out;
+  if(A.vert||B.vert){const V=A.vert?A:B,F=A.vert?B:A;if(V.q>=F.lo-1e-9&&V.q<=F.hi+1e-9){const p=F.f(V.q);if(p>=V.p0-1e-6&&p<=V.p1+1e-6)out.push({q:V.q,p});}return out;}
+  const lo=Math.max(A.lo,B.lo),hi=Math.min(A.hi,B.hi);if(hi-lo<1e-6)return out;
+  const n=500;let pq=lo,pd=A.f(lo)-B.f(lo);if(Math.abs(pd)<1e-9)out.push({q:lo,p:A.f(lo)});
+  for(let i=1;i<=n;i++){const q=lo+(hi-lo)*i/n,d=A.f(q)-B.f(q);
+    if(Math.abs(d)<1e-9){if(Math.abs(pd)>=1e-9)out.push({q,p:A.f(q)});}
+    else if(Math.abs(pd)>=1e-9&&pd*d<0){let a=pq,b=q,da=pd;for(let j=0;j<40;j++){const m=(a+b)/2,dm=A.f(m)-B.f(m);if(da*dm<=0)b=m;else{a=m;da=dm;}}const m=(a+b)/2;out.push({q:m,p:A.f(m)});}
+    pq=q;pd=d;}
+  return out;}
+function snapEnd(o,i,q,p){const j=i==='1'?'2':'1',ox=o['x'+j],oy=o['y'+j],dx=q-ox,dy=p-oy;
+  if(Math.abs(dy)<0.08*Math.abs(dx))p=oy;else if(Math.abs(dx)<0.08*Math.abs(dy))q=ox;o['x'+i]=q;o['y'+i]=p;}
+function fHandle(o,part,q,p){return`<g class="hd ${o.color}" data-fo="${o.id}" data-part="${part}"><circle class="hhit" cx="${r1(X(q))}" cy="${r1(Y(p))}" r="16"/><circle class="hdot" cx="${r1(X(q))}" cy="${r1(Y(p))}" r="6.5"/></g>`;}
+TPL.free=function(st,lay){const rows=[],objs=st.objs.slice();if(st.draft)objs.push(st.draft);
+  const ysym=(st.yl.trim().split(/[ ,，、]/)[0]||'P').slice(0,3),xsym=(st.xl.trim().split(/[ ,，、]/)[0]||'Q').slice(0,3);
+  if(!objs.length)lay.tags+=`<text class="empty" x="${FR.x+FR.w/2}" y="${FR.y+FR.h/2-10}" text-anchor="middle">Pick a tool on the right, then drag on the board.</text><text class="empty" x="${FR.x+FR.w/2}" y="${FR.y+FR.h/2+14}" text-anchor="middle">（在右側選工具，然後在畫布上拖曳）</text>`;
+  for(const o of objs){const sel=o.id===st.sel&&o!==st.draft,E=fEval(o);
+    const d=o.type==='line'?`M${r1(X(o.x1))} ${r1(Y(o.y1))}L${r1(X(o.x2))} ${r1(Y(o.y2))}`:fpath(E.f,0,100,200);
+    lay.curves+=`<g class="cv ${o.color}${sel?' sel':''}" data-fo="${o.id}" data-part="body"><path class="hit" d="${d}"/><path class="stroke" d="${d}"/></g>`;
+    if(o.label){if(o.type==='line'){const e=(o.x2>o.x1||(o.x2===o.x1&&o.y2>o.y1))?[o.x2,o.y2]:[o.x1,o.y1];let x=X(e[0])+8,a='start';if(x>FR.x+FR.w-30){x=X(e[0])-8;a='end';}
+        lay.tags+=`<text class="cl ${o.color}" x="${r1(x)}" y="${r1(Y(e[1])-8)}" text-anchor="${a}">${escH(o.label)}</text>`;}
+      else lay.tags+=labelAt(E.f,escH(o.label),o.color);}
+    if(sel&&st.tool==='select'){if(o.type==='line')lay.handles+=fHandle(o,'p1',o.x1,o.y1)+fHandle(o,'p2',o.x2,o.y2);
+      else{let qa=o.h+20;if(!(E.f(qa)<=100&&qa<=100))qa=o.h+10;if(!(E.f(qa)<=100&&qa<=100))qa=o.h-10;lay.handles+=fHandle(o,'v',o.h,o.k)+fHandle(o,'arm',qa,E.f(qa));}}}
+  const ev=st.objs.map(o=>({o,E:fEval(o)}));let pts=[];
+  for(let i=0;i<ev.length;i++)for(let j=i+1;j<ev.length;j++)for(const p of fInter(ev[i].E,ev[j].E))if(inPlot(p.q,p.p))pts.push({q:p.q,p:p.p,a:ev[i].o,b:ev[j].o});
+  pts.sort((u,v)=>u.q-v.q);const uniq=[];for(const p of pts)if(!uniq.some(u=>Math.abs(u.q-p.q)<1.2&&Math.abs(u.p-p.p)<1.2))uniq.push(p);
+  const usedY=[],usedX=[];
+  const nm=o=>o.label||(o.type==='line'?'line (線)':'curve (曲線)');
+  uniq.forEach((p,i)=>{const Lt=String.fromCharCode(65+(i%26));const lt=st.show.letters;
+    const okY=!usedY.some(v=>Math.abs(v-p.p)<4),okX=!usedX.some(v=>Math.abs(v-p.q)<5);if(okY)usedY.push(p.p);if(okX)usedX.push(p.q);
+    lay.guides+=guide(p.q,p.p,{pl:lt&&okY?sub(ysym,Lt):'',ql:lt&&okX?sub(xsym,Lt):''});lay.points+=dot(p.q,p.p,lt?Lt:'',false,false,8,-8);
+    rows.push([`${lt?Lt+': ':''}${escH(nm(p.a))} × ${escH(nm(p.b))}`,`(${f1(p.q)}, ${f1(p.p)})`]);});
+  if(st.show.mins)for(const o of st.objs)if(o.type!=='line'&&inPlot(o.h,o.k)){lay.points+=dot(o.h,o.k,'min '+escH(o.label),true,true,0,20,'middle');rows.push([`min ${escH(nm(o))} (最低點)`,`(${f1(o.h)}, ${f1(o.k)})`]);}
+  const head=[['Lines drawn (已畫線數)',String(st.objs.length),'em'],['Intersections (交點數)',String(uniq.length),'em']];
+  if(rows.length)head.push('-');
+  return{rows:head.concat(rows),status:null,yt:escH(st.yl),xt:escH(st.xl)};
+};
+
+/* ---------- game theory ---------- */
+function gAnalyze(pay){
+  const bestA=[0,1].map(c=>{const m=Math.max(pay[0][c][0],pay[1][c][0]);return[0,1].filter(r=>pay[r][c][0]===m);});
+  const bestB=[0,1].map(r=>{const m=Math.max(pay[r][0][1],pay[r][1][1]);return[0,1].filter(c=>pay[r][c][1]===m);});
+  const domA=[0,1].find(r=>[0,1].every(c=>pay[r][c][0]>pay[1-r][c][0]));
+  const domB=[0,1].find(c=>[0,1].every(r=>pay[r][c][1]>pay[r][1-c][1]));
+  const ne=[];for(let r=0;r<2;r++)for(let c=0;c<2;c++)if(bestA[c].includes(r)&&bestB[r].includes(c))ne.push([r,c]);
+  let J=[0,0],js=-Infinity;for(let r=0;r<2;r++)for(let c=0;c<2;c++){const v=pay[r][c][0]+pay[r][c][1];if(v>js){js=v;J=[r,c];}}
+  return{bestA,bestB,domA,domB,ne,J};}
+const gn=v=>Number.isInteger(v)?String(v):f1(v);
+function gAnswers(g,pay){const a=gAnalyze(pay),A=g.A,B=g.B,sa=g.sa,sb=g.sb,out=[];
+  const cmpA=[0,1].map(c=>[`If ${B[0]} chooses “${sb[c][0]}”: ${sa[0][0]} → ${gn(pay[0][c][0])}, ${sa[1][0]} → ${gn(pay[1][c][0])}`,`若${B[1]}選「${sb[c][1]}」：${sa[0][1]} ${gn(pay[0][c][0])}、${sa[1][1]} ${gn(pay[1][c][0])}`]);
+  const cmpB=[0,1].map(r=>[`If ${A[0]} chooses “${sa[r][0]}”: ${sb[0][0]} → ${gn(pay[r][0][1])}, ${sb[1][0]} → ${gn(pay[r][1][1])}`,`若${A[1]}選「${sa[r][1]}」：${sb[0][1]} ${gn(pay[r][0][1])}、${sb[1][1]} ${gn(pay[r][1][1])}`]);
+  out.push({q:[`Does ${A[0]} have a dominant strategy? If so, which one?`,`${A[1]}有沒有優勢策略？如果有，是哪一個？`],
+    a:[a.domA!==undefined?[`Yes: “${sa[a.domA][0]}” is better for ${A[0]} whatever ${B[0]} does.`,`有：不論${B[1]}怎麼選，${A[1]}選「${sa[a.domA][1]}」都比較好。`]:[`No: ${A[0]}'s best choice depends on what ${B[0]} does.`,`沒有：${A[1]}的最佳選擇要看${B[1]}怎麼選。`]].concat(cmpA)});
+  out.push({q:[`Does ${B[0]} have a dominant strategy? If so, which one?`,`${B[1]}有沒有優勢策略？如果有，是哪一個？`],
+    a:[a.domB!==undefined?[`Yes: “${sb[a.domB][0]}” is better for ${B[0]} whatever ${A[0]} does.`,`有：不論${A[1]}怎麼選，${B[1]}選「${sb[a.domB][1]}」都比較好。`]:[`No: ${B[0]}'s best choice depends on what ${A[0]} does.`,`沒有：${B[1]}的最佳選擇要看${A[1]}怎麼選。`]].concat(cmpB)});
+  let neA;
+  if(!a.ne.length)neA=[[`There is no Nash equilibrium in pure strategies.`,`沒有純策略的納許均衡。`]];
+  else{neA=a.ne.map(([r,c])=>[`(${sa[r][0]}, ${sb[c][0]}) with payoffs (${gn(pay[r][c][0])}, ${gn(pay[r][c][1])}).`,`（${sa[r][1]}，${sb[c][1]}），報酬為（${gn(pay[r][c][0])}，${gn(pay[r][c][1])}）。`]);
+    if(a.ne.length>1)neA.unshift([`There are ${a.ne.length} Nash equilibria:`,`共有 ${a.ne.length} 個納許均衡：`]);
+    if(a.ne.length===1&&a.domA!==undefined&&a.domB===undefined){const c=a.ne[0][1];neA.push([`${A[0]} plays its dominant strategy, and ${B[0]}'s best response to it is “${sb[c][0]}”.`,`${A[1]}會選優勢策略，${B[1]}對此的最佳反應是「${sb[c][1]}」。`]);}
+    if(a.ne.length===1&&a.domB!==undefined&&a.domA===undefined){const r=a.ne[0][0];neA.push([`${B[0]} plays its dominant strategy, and ${A[0]}'s best response to it is “${sa[r][0]}”.`,`${B[1]}會選優勢策略，${A[1]}對此的最佳反應是「${sa[r][1]}」。`]);}
+    neA.push([`At this cell, neither player can do better by changing only its own choice.`,`在這一格，任何一方單獨改變選擇都不會更好。`]);}
+  out.push({q:[`Find the Nash equilibrium.`,`找出納許均衡。`],a:neA});
+  if(g.extra==='pd'){const[Jr,Jc]=a.J;let ans;
+    if(a.ne.length===1){const[nr,nc]=a.ne[0],N=pay[nr][nc],Jp=pay[Jr][Jc];
+      if((Jr!==nr||Jc!==nc)&&Jp[0]>N[0]&&Jp[1]>N[1]){const devA=pay[1-Jr][Jc][0],devB=pay[Jr][1-Jc][1];
+        ans=[[`At (${sa[Jr][0]}, ${sb[Jc][0]}) both earn more (${gn(Jp[0])} > ${gn(N[0])}, ${gn(Jp[1])} > ${gn(N[1])}), but it is not stable.`,`在（${sa[Jr][1]}，${sb[Jc][1]}）兩家都賺比較多（${gn(Jp[0])} > ${gn(N[0])}、${gn(Jp[1])} > ${gn(N[1])}），但這個結果不穩定。`]];
+        if(devA>Jp[0])ans.push([`If ${B[0]} stays there, ${A[0]} earns ${gn(devA)} instead of ${gn(Jp[0])} by switching to “${sa[1-Jr][0]}”.`,`若${B[1]}不變，${A[1]}改選「${sa[1-Jr][1]}」可以從 ${gn(Jp[0])} 變成 ${gn(devA)}。`]);
+        if(devB>Jp[1])ans.push([`${B[0]} faces the same temptation (${gn(Jp[1])} → ${gn(devB)}).`,`${B[1]}也有同樣的誘因（${gn(Jp[1])} → ${gn(devB)}）。`]);
+        ans.push([`This is a prisoners' dilemma. It is also why collusion and cartels tend to break down.`,`這就是囚犯困境，也說明勾結、卡特爾為什麼容易破局。`]);}}
+    if(!ans)ans=[[`With these payoffs the Nash equilibrium already gives the best result for both, so this is not a prisoners' dilemma.`,`在目前的數字下，納許均衡已經是對雙方都好的結果，不構成囚犯困境。`]];
+    out.push({q:[`Both would earn more at (${sa[0][0]}, ${sb[0][0]}). Why don’t they end up there?`,`雙方都「${sa[0][1]}」時利潤比較高，為什麼結果不會停在那裡？`],a:ans});}
+  if(g.extra==='ban'){let ans;const Z=pay[1][1];
+    if(a.ne.length===1){const[nr,nc]=a.ne[0],N=pay[nr][nc],dA=Z[0]-N[0],dB=Z[1]-N[1];
+      const w=(d,en,zh)=>[d>0?`${en} gains ${gn(d)}`:d<0?`${en} loses ${gn(-d)}`:`${en} is unchanged`,d>0?`${zh}增加 ${gn(d)}`:d<0?`${zh}減少 ${gn(-d)}`:`${zh}不變`];
+      const x=w(dA,A[0],A[1]),y=w(dB,B[0],B[1]);
+      ans=[[`Under the ban both choose “${sa[1][0]}”: payoffs (${gn(Z[0])}, ${gn(Z[1])}) instead of (${gn(N[0])}, ${gn(N[1])}).`,`禁止廣告後兩家都「${sa[1][1]}」：報酬從（${gn(N[0])}，${gn(N[1])}）變成（${gn(Z[0])}，${gn(Z[1])}）。`],[`${x[0]}; ${y[0]}.`,`${x[1]}；${y[1]}。`]];
+      if(dA<0&&dB>0)ans.push([`${A[0]} relied on advertising to win customers, so it loses most from the ban.`,`${A[1]}原本靠廣告搶客，所以禁令對它最不利。`]);}
+    else ans=[[`This question needs a single Nash equilibrium to compare with.`,`這一題需要唯一的納許均衡才能比較。`]];
+    out.push({q:[`Suppose the government bans phone advertising, so both must choose “${sa[1][0]}”. Compared with the Nash equilibrium, who gains and who loses?`,`假設政府禁止手機廣告，兩家都只能「${sa[1][1]}」。和納許均衡相比，誰得利、誰受損？`],a:ans});}
+  return{a,list:out};}
+TPL.game=function(st,lay){const g=GAMES[st.prob],pay=st.pay[st.prob],an=gAnalyze(pay),rows=[];
+  const x0=214,y0=160,w=188,h=118,xm=x0+w,ym=y0+h;
+  let s=`<text class="gtitle" x="320" y="40" text-anchor="middle">${g.title[0]} (${g.title[1]})</text>`;
+  s+=`<text class="gplayer cS" x="${x0+w}" y="84" text-anchor="middle">${g.B[0]} (${g.B[1]})</text>`;
+  s+=`<text class="gplayer cD" transform="translate(40 ${y0+h}) rotate(-90)" text-anchor="middle">${g.A[0]} (${g.A[1]})</text>`;
+  if(st.show.dom&&an.domA!==undefined){const r=an.domA;s+=`<rect class="gdom" x="64" y="${y0+r*h}" width="${x0+2*w-64}" height="${h}"/>`;}
+  if(st.show.dom&&an.domB!==undefined){const c=an.domB;s+=`<rect class="gdom" x="${x0+c*w}" y="98" width="${w}" height="${y0+2*h-98}"/>`;}
+  for(let c=0;c<2;c++){s+=`<text class="gstrat" x="${x0+c*w+w/2}" y="124" text-anchor="middle">${g.sb[c][0]}</text><text class="gstrat zh" x="${x0+c*w+w/2}" y="146" text-anchor="middle">${g.sb[c][1]}</text>`;
+    if(st.show.dom&&an.domB===c)s+=`<text class="gdomt" x="${x0+c*w+w/2}" y="106" text-anchor="middle">Dominant (優勢策略)</text>`;}
+  for(let r=0;r<2;r++){s+=`<text class="gstrat" x="${x0-14}" y="${y0+r*h+h/2-4}" text-anchor="end">${g.sa[r][0]}</text><text class="gstrat zh" x="${x0-14}" y="${y0+r*h+h/2+18}" text-anchor="end">${g.sa[r][1]}</text>`;
+    if(st.show.dom&&an.domA===r)s+=`<text class="gdomt" x="${x0-14}" y="${y0+r*h+h/2+40}" text-anchor="end">Dominant (優勢策略)</text>`;}
+  s+=`<rect class="ggrid" x="${x0}" y="${y0}" width="${2*w}" height="${2*h}"/><line class="ggrid" x1="${xm}" y1="${y0}" x2="${xm}" y2="${y0+2*h}"/><line class="ggrid" x1="${x0}" y1="${ym}" x2="${x0+2*w}" y2="${ym}"/>`;
+  for(let r=0;r<2;r++)for(let c=0;c<2;c++){const cx=x0+c*w+w/2,cy=y0+r*h+h/2+13,isNE=an.ne.some(([a,b])=>a===r&&b===c);
+    if(st.show.ne&&isNE)s+=`<rect class="gne" x="${x0+c*w+4}" y="${y0+r*h+4}" width="${w-8}" height="${h-8}" rx="6"/><text class="gnet" x="${cx}" y="${y0+r*h+24}" text-anchor="middle">Nash equilibrium (納許均衡)</text>`;
+    const items=[[0,cx-44,'cD',an.bestA[c].includes(r)],[1,cx+44,'cS',an.bestB[r].includes(c)]];
+    s+=`<text class="gcomma" x="${cx}" y="${cy}" text-anchor="middle">,</text>`;
+    for(const[p,x,cls,isBR]of items){const v=gn(pay[r][c][p]),tw=Math.max(22,v.length*21);
+      if(st.show.br&&isBR)s+=`<line class="gbr ${cls}" x1="${x-tw/2}" y1="${cy+9}" x2="${x+tw/2}" y2="${cy+9}"/>`;
+      if(st.show.marks&&st.marks[st.prob+':'+r+','+c+','+p])s+=`<ellipse class="gmark" cx="${x}" cy="${cy-13}" rx="${tw/2+12}" ry="27"/>`;
+      s+=`<g class="gpay" data-pay="${r},${c},${p}"><rect x="${x-tw/2-12}" y="${cy-42}" width="${tw+24}" height="56" fill="transparent"/><text class="gnum ${cls}" x="${x}" y="${cy}" text-anchor="middle">${v}</text></g>`;}}
+  s+=`<text class="gnote" x="320" y="${y0+2*h+44}" text-anchor="middle">Payoffs are (${g.A[0]}, ${g.B[0]}), in ${g.unit[0]} (報酬為（${g.A[1]}，${g.B[1]}），單位：${g.unit[1]})</text>`;
+  s+=`<text class="gnote sm" x="320" y="${y0+2*h+70}" text-anchor="middle">Click a number to circle it (點數字可以圈起來，再點一次取消)</text>`;
+  lay.tags+=s;
+  const nm=(i,arr)=>i===undefined?'None (沒有)':`${arr[i][0]} (${arr[i][1]})`;
+  rows.push(['Shown answers follow the checkboxes (數值依勾選顯示)','']);
+  rows.push(['-']);
+  rows.push([`${g.A[0]}: dominant strategy (優勢策略)`,st.show.dom?nm(an.domA,g.sa):'hidden (隱藏)']);
+  rows.push([`${g.B[0]}: dominant strategy (優勢策略)`,st.show.dom?nm(an.domB,g.sb):'hidden (隱藏)']);
+  rows.push(['Nash equilibrium (納許均衡)',st.show.ne?(an.ne.length?an.ne.map(([r,c])=>`(${g.sa[r][1]}, ${g.sb[c][1]})`).join(' / '):'None (沒有)'):'hidden (隱藏)','em']);
+  if(st.show.ne&&an.ne.length)rows.push(['Payoffs at equilibrium (均衡報酬)',an.ne.map(([r,c])=>`(${gn(pay[r][c][0])}, ${gn(pay[r][c][1])})`).join(' / ')]);
+  return{rows:rows.filter(r=>r[0]!=='-'||true).map(r=>r[0]==='-'?'-':r),status:null,noAxes:true};
+};
+function renderQA(){const el=document.getElementById('qa');if(!el||G.tpl!=='game')return;const st=cur(),g=GAMES[st.prob],res=gAnswers(g,st.pay[st.prob]);
+  const esc2=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  el.innerHTML=`<p class="story">${esc2(g.story[0])}<span class="zh">${esc2(g.story[1])}</span></p>`+res.list.map((it,i)=>{const open=!!st.open[st.prob+'-'+i];
+    return`<div class="qa"><p class="q"><b>Q${i+1}.</b> ${esc2(it.q[0])}<span class="zh">${esc2(it.q[1])}</span></p><button class="mini-btn" data-reveal="${i}">${open?'Hide answer (隱藏答案)':'Show answer (顯示答案)'}</button>`+
+      (open?`<div class="ans">${it.a.map(l=>`<p>${esc2(l[0])}<span class="zh">${esc2(l[1])}</span></p>`).join('')}</div>`:'')+'</div>';}).join('');}
+
+/* ---------- side panel ---------- */
+const HINTS={
+  game:['Pick a problem, then ask the questions one at a time. Students can click numbers to circle them. Turn on the checkboxes to reveal best responses, dominant strategies and the Nash equilibrium. You can also change the payoffs; the answers update by themselves.','選一題後逐題提問，學生可以點表中的數字圈起來。勾選下方的選項，就會依序揭曉最佳反應、優勢策略和納許均衡。報酬數字可以自己修改，答案會自動重新計算。'],
+  free:['Pick a tool, then drag on the board. <b>Line:</b> drag from start to end; nearly flat or upright lines snap straight. <b>U / MC curve:</b> press at the lowest point and drag up to one side to set the width. Intersections and dashed lines appear by themselves. <b>Select / move</b> lets you drag, rename or delete a line (Delete key works too).','選好工具後在畫布上拖曳。<b>直線：</b>從起點拖到終點，接近水平或垂直時會自動拉直。<b>U 形、勾形：</b>在最低點按下，往一側斜上方拖，決定開口寬窄。畫完會自動標出交點和到兩軸的虛線。切到<b>選取移動</b>可以拖動、改名稱、改顏色或刪除（也可按 Delete 鍵）。'],
+  sd:['<b>Drag the middle</b> of a curve to shift it; <b>drag a dot</b> to change its slope. The original curve stays as a dashed line so you can compare E₀ and E₁.','<b>拖曲線中段</b>整條平移，<b>拖圓點</b>改斜率。原曲線會留成虛線，方便比較 E₀ 與 E₁；按「Set as new baseline」可接著做第二次變動。'],
+  ctl:['<b>Drag the black horizontal line</b> to set the controlled price. A ceiling binds only below P*, a floor only above P*.','<b>上下拖黑色水平線</b>調整管制價格。上限低於均衡價、下限高於均衡價才有效，圖上標出短缺或過剩與 DWL。'],
+  tax:['<b>Drag the dashed line</b> (S + t or D − t) to change the tax. Make D or S steeper to show that the less elastic side bears more.','<b>上下拖虛線</b>調整稅額，可切換對賣方或買方課稅（結果相同）。把 D 或 S 轉陡，示範彈性越小的一方負擔越多。'],
+  ext:['<b>Drag the dashed MSC or MSB</b> to change the external cost or benefit per unit. The gray triangle is the deadweight loss.','<b>上下拖虛線</b>（MSC 或 MSB）調整每單位外部成本或利益。圖上標出市場量與社會最適量，灰色三角形是 DWL。'],
+  world:['<b>Drag the world price line.</b> Below P* the country imports; above P* it exports. The green triangle is the gains from trade.','<b>上下拖世界價格線</b>：低於國內均衡價是進口國，高於是出口國。綠色三角形是貿易利得。'],
+  tariff:['<b>Drag the lower line</b> for the world price and <b>the upper line</b> for the tariff. The rectangle is tariff revenue; the two gray triangles are DWL.','<b>拖下面那條</b>改世界價格，<b>拖上面那條</b>改關稅。長方形是關稅收入，兩個灰色小三角形是生產面與消費面的 DWL。'],
+  prod:['<b>Drag the dotted marker</b> to change labor L. <b>Drag TP, MP or AP</b> to scale the technology. Turn on the tangent (slope = MP) and the ray (slope = AP) to connect the two panels.','<b>左右拖點狀標記線</b>改變勞動量 L；<b>拖 TP、MP 或 AP</b> 可調整技術水準。切線斜率就是 MP，原點射線斜率就是 AP，可以用來說明上下兩圖的關係。'],
+  tc:['<b>Drag the marker</b> to change q. <b>Drag TFC</b> to change fixed cost; <b>drag TC or TVC</b> to change variable cost. The tangent slope is MC and the ray slope is ATC.','<b>左右拖標記線</b>改變產量 q。<b>拖 TFC</b> 改固定成本，<b>拖 TC 或 TVC</b> 改變動成本。切線斜率就是 MC，原點射線斜率就是 ATC；這張圖和 Unit Cost 圖的參數會同步。'],
+  uc:['<b>Drag the marker</b> to change q. <b>Drag MC or AVC</b> to shift variable cost; <b>drag ATC or AFC</b> to change fixed cost. MC crosses AVC and ATC at their minimums.','<b>左右拖標記線</b>改變產量 q。<b>拖 MC 或 AVC</b> 移動變動成本，<b>拖 ATC 或 AFC</b> 改固定成本。MC 會穿過 AVC 與 ATC 的最低點；ATC 與 AVC 的差距就是 AFC。'],
+  comp:['<b>Drag the price line</b> to see the firm choose q where P = MC. <b>Drag MC or AVC</b> to shift variable cost; <b>drag ATC</b> to change fixed cost.','<b>上下拖價格線</b>看廠商如何選 P = MC 的產量。<b>拖 MC 或 AVC</b> 移動變動成本，<b>拖 ATC</b> 只改固定成本。價格跌破最低 AVC 就停業。'],
+  mono:['<b>Drag D</b> (middle to shift, dots to rotate); MR redraws itself. <b>Drag MC</b> or <b>ATC</b> to change costs.','<b>拖需求線 D</b>（中段平移、圓點轉斜率），MR 會自動跟著畫。<b>拖 MC</b> 改邊際成本，<b>拖 ATC</b> 改固定成本。灰色三角形是相對完全競爭的 DWL。'],
+  natmono:['Switch between the three policies above. <b>Drag D, MC or ATC</b> to change demand and costs.','上方切換三種管制方案：不管制、邊際成本定價（廠商虧損需補貼）、平均成本定價（零利潤）。<b>拖 D、MC、ATC</b> 可調整。'],
+  disc:['Compare a <b>single price</b> with <b>perfect price discrimination</b>. The staircase shows each buyer paying their own maximum price.','切換<b>單一價格</b>與<b>完全差別取價</b>比較。階梯線表示每位消費者都付自己的最高願付價格，原本的 CS 與 DWL 全部變成廠商利潤。']
+};
+const ctrl=document.getElementById('ctrl'),ro=document.getElementById('ro'),hint=document.getElementById('hint');
+function buildCtrl(){const st=cur();let h='';
+  if(KINDS[G.tpl])h+=`<div class="sec"><h2>SCENARIO (情境)</h2><div class="seg" role="group" aria-label="Scenario (情境)">`+KINDS[G.tpl].map(([k,t])=>`<button data-kind="${k}" aria-pressed="${st.kind===k}">${t}</button>`).join('')+'</div></div>';
+  if(G.tpl==='free'){const o=st.objs.find(x=>x.id===st.sel);
+    h+=`<div class="sec"><h2>DRAW TOOLS (作圖工具)</h2><div class="seg" role="group" aria-label="Draw tool (作圖工具)">${FT.map(([k,t])=>`<button data-ftool="${k}" aria-pressed="${st.tool===k}">${t}</button>`).join('')}</div></div>`;
+    h+='<div class="sec"><h2>SELECTED LINE (選取的線)</h2>'+(o?`<label class="fl">Name (名稱)<input type="text" id="flabel" data-fl="1" value="${escA(o.label)}" maxlength="16"></label><div class="chips">${QL.map(l=>`<button data-ql="${escA(l)}">${escH(l)}</button>`).join('')}</div><div class="chips">${PAL.map(c=>`<button class="swc ${c}" data-fc="${c}" aria-pressed="${o.color===c}" aria-label="Color (顏色)"></button>`).join('')}</div><div class="acts"><button data-fdel="1">Delete line (刪除這條線)</button></div>`
+      :'<p class="hint">Choose “Select / move”, then click a line to rename, recolor or delete it.<span class="zh">用「選取移動」點一條線，就能改名稱、顏色或刪除。</span></p>')+'</div>';
+    h+=`<div class="sec"><h2>AXIS NAMES (座標軸名稱)</h2><div class="axin"><label>Y <input type="text" id="fy" data-ax="yl" value="${escA(st.yl)}" maxlength="14"></label><label>X <input type="text" id="fx" data-ax="xl" value="${escA(st.xl)}" maxlength="14"></label></div></div>`;}
+  const allBtns=g=>`<div class="mini"><button data-all="${g}" data-val="1">Select all (全選)</button><button data-all="${g}" data-val="0">Clear all (取消全選)</button></div>`;
+  if(G.tpl==='game'){const gp=st.pay[st.prob],g=GAMES[st.prob];
+    h+=`<div class="sec"><h2>PROBLEM (題目)</h2><div class="seg" role="group" aria-label="Problem (題目)">${GAMES.map((x,i)=>`<button data-prob="${i}" aria-pressed="${st.prob===i}">${i+1}. ${x.title[0]} (${x.title[1]})</button>`).join('')}</div></div><div class="sec"><h2>QUESTIONS (問題)</h2><div id="qa"></div></div>`;
+    h+=`<div class="sec"><h2>EDIT PAYOFFS (修改報酬)</h2><table class="payed"><tr><th></th>${g.sb.map(x=>`<th>${x[1]}</th>`).join('')}</tr>${[0,1].map(r=>`<tr><th>${g.sa[r][1]}</th>${[0,1].map(c=>`<td>${[0,1].map(p=>`<input type="number" step="1" id="pay-${st.prob}-${r}-${c}-${p}" data-payin="${r},${c},${p}" class="${p?'pb':'pa'}" value="${gp[r][c][p]}" aria-label="${p?g.B[0]:g.A[0]} payoff">`).join('')}</td>`).join('')}</tr>`).join('')}</table><p class="hint">Blue = ${g.A[0]}, orange = ${g.B[0]}<span class="zh">藍色是${g.A[1]}、橘色是${g.B[1]}的報酬</span></p></div>`;}
+  if(LINES[G.tpl].length)h+='<div class="sec"><div class="sh"><h2>CURVES (曲線)</h2>'+allBtns('lines')+'</div><div class="layers">'+LINES[G.tpl].map(([k,t,c])=>`<label><input type="checkbox" id="ln-${G.tpl}-${k}" data-line="${k}"${st.lines[k]!==false?' checked':''}><span class="${k==='dots'?'chipd':'chipl'}" style="${k==='dots'?'background':'border-color'}:var(${c})"></span>${t}</label>`).join('')+'</div></div>';
+  if(OPTS[G.tpl].length)h+='<div class="sec"><div class="sh"><h2>SHADING &amp; MARKS (區塊與標記)</h2>'+allBtns('show')+'</div><div class="layers">'+OPTS[G.tpl].map(([k,t,c])=>`<label><input type="checkbox" id="op-${G.tpl}-${k}" data-show="${k}"${st.show[k]?' checked':''}><span class="chipc" style="background:var(${c})"></span>${t}</label>`).join('')+'</div></div>';
+  if(G.tpl==='free')h+='<div class="acts"><button data-act="fclear">Clear canvas (清空畫布)</button>'+(st.trash?'<button data-act="fundo">Undo clear (復原清空)</button>':'')+'</div>';
+  else h+='<div class="acts">'+(G.tpl==='sd'?'<button data-act="base">Set as new baseline (以目前為新基準)</button>':'')+'<button data-act="reset">Reset this graph (重設此圖)</button></div>';
+  ctrl.innerHTML=h;hint.innerHTML=HINTS[G.tpl][0]+'<span class="zh">'+HINTS[G.tpl][1]+'</span>';
+  document.querySelectorAll('.tabs button[data-tpl]').forEach(b=>b.setAttribute('aria-selected',b.dataset.tpl===G.tpl));
+}
+ctrl.addEventListener('change',e=>{const st=cur(),d=e.target.dataset;if(d.show)st.show[d.show]=e.target.checked;else if(d.line)st.lines[d.line]=e.target.checked;else return;render();save();});
+ctrl.addEventListener('input',e=>{const st=cur(),d=e.target.dataset;
+  if(d.payin){const v=parseFloat(e.target.value);if(Number.isFinite(v)){const[r,c,p]=d.payin.split(',').map(Number);st.pay[st.prob][r][c][p]=v;render();save();}return;}
+  if(d.fl){const o=st.objs.find(x=>x.id===st.sel);if(o){o.label=e.target.value;render();save();}}
+  else if(d.ax){st[d.ax]=e.target.value;render();save();}});
+document.addEventListener('keydown',e=>{if(G.tpl!=='free'||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;const st=cur();
+  if((e.key==='Delete'||e.key==='Backspace')&&st.sel!=null){st.objs=st.objs.filter(x=>x.id!==st.sel);st.sel=null;e.preventDefault();buildCtrl();render();save();}});
+ctrl.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const st=cur();
+  if(b.dataset.kind){st.kind=b.dataset.kind;if(G.tpl==='ctl')st.price=st.kind==='ceiling'?35:65;buildCtrl();}
+  if(b.dataset.act==='reset'){G.st[G.tpl]=DEF[G.tpl]();buildCtrl();}
+  if(b.dataset.act==='base')st.base={D:copy(st.D),S:copy(st.S)};
+  if(b.dataset.ftool){st.tool=b.dataset.ftool;buildCtrl();}
+  if(b.dataset.prob){st.prob=+b.dataset.prob;buildCtrl();}
+  if(b.dataset.reveal){const k=st.prob+'-'+b.dataset.reveal;st.open[k]=!st.open[k];}
+  if(b.dataset.ql||b.dataset.fc||b.dataset.fdel){const o=st.objs.find(x=>x.id===st.sel);if(o){
+    if(b.dataset.ql){o.label=b.dataset.ql;if(FCOL[o.label])o.color=FCOL[o.label];}
+    if(b.dataset.fc)o.color=b.dataset.fc;
+    if(b.dataset.fdel){st.objs=st.objs.filter(x=>x!==o);st.sel=null;}}buildCtrl();}
+  if(b.dataset.act==='fclear'){if(st.objs.length||st.strokes.length)st.trash={objs:st.objs,strokes:st.strokes};st.objs=[];st.strokes=[];st.sel=null;buildCtrl();}
+  if(b.dataset.act==='fundo'&&st.trash){st.objs=st.trash.objs.concat(st.objs);st.strokes=st.trash.strokes.concat(st.strokes);st.trash=null;buildCtrl();}
+  if(b.dataset.all){const v=b.dataset.val==='1',obj=b.dataset.all==='lines'?st.lines:st.show,list=b.dataset.all==='lines'?LINES[G.tpl]:OPTS[G.tpl];for(const o of list)obj[o[0]]=v;buildCtrl();}
+  render();save();});
+document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-tpl]');if(!b)return;
+  const prev=G.tpl,next=b.dataset.tpl,pair=['tc','uc'];
+  if(pair.includes(prev)&&pair.includes(next)&&prev!==next){for(const k of['a','F','q'])G.st[next][k]=G.st[prev][k];}
+  G.tpl=next;buildCtrl();render();save();});
+
+/* ---------- render ---------- */
+function render(){const st=cur();const lay={areas:'',ghost:'',curves:'',guides:'',points:'',tags:'',handles:'',extra:''};
+  const fr0=FRM[G.tpl]||'main';FR=FRAMES[fr0];
+  const out=TPL[G.tpl](st,lay);
+  svg.classList.toggle('pen',G.tool==='pen'||(G.tpl==='free'&&st.tool!=='select'));
+  const axList=out.axes||[{fr:fr0,yt:out.yt,xt:out.xt}];
+  let ax='';if(!out.noAxes)for(const a of axList){FR=FRAMES[a.fr];ax+=axes(a.yt,a.xt);}
+  const A=FRAMES[axList[0].fr],Bf=out.clipB?FRAMES[out.clipB]:null;
+  const hid=LINES[G.tpl].map(x=>x[0]).filter(id=>st.lines[id]===false).map(id=>'#board .ln-'+id).join(',');
+  const ink=(st.strokes||[]).map(s=>`<path class="ink ${s.c}" d="${s.p.map((p,i)=>(i?'L':'M')+p[0]+' '+p[1]).join('')}"/>`).join('');
+  svg.innerHTML=`<defs><clipPath id="cpA"><rect x="${A.x}" y="${A.y}" width="${A.w}" height="${A.h}"/></clipPath>`+(Bf?`<clipPath id="cpB"><rect x="${Bf.x}" y="${Bf.y}" width="${Bf.w}" height="${Bf.h}"/></clipPath>`:'')+
+  `<marker id="ar" class="mk" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z"/></marker></defs>`+
+  `<style>${hid?hid+'{display:none}':''}</style><rect x="0" y="0" width="${VW}" height="${VH}" fill="var(--board)"/>`+ax+
+  `<g clip-path="url(#cpA)">${lay.areas}${lay.ghost}${lay.curves}</g>`+(Bf?`<g clip-path="url(#cpB)">${lay.extra}</g>`:'')+`${lay.guides}<g class="ln-dots">${lay.points}</g>${lay.tags}${lay.handles}${ink}`;
+  const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  let h='';if(out.status)h+=`<span class="status ${out.status.c}">${esc(out.status.t)}</span>`;
+  h+='<dl class="ro">'+out.rows.map(r=>r==='-'?'<div class="sep"></div>':`<dt>${esc(r[0])}</dt><dd class="${r[2]||''}">${esc(r[1])}</dd>`).join('')+'</dl>';
+  ro.innerHTML=h;
+  renderQA();
+}
+
+/* ---------- pointer ---------- */
+let drag=null,stroke=null;
+function toSvg(e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;const m=svg.getScreenCTM();return m?p.matrixTransform(m.inverse()):{x:0,y:0};}
+const toEcon=(s,f)=>({q:(s.x-f.x)/f.w*f.qmax,p:(1-(s.y-f.y)/f.h)*f.pmax});
+svg.addEventListener('pointerdown',e=>{const s=toSvg(e),st=cur();
+  if(G.tool==='pen'){stroke={c:G.pen,p:[[Math.round(s.x),Math.round(s.y)]]};st.strokes.push(stroke);svg.setPointerCapture(e.pointerId);e.preventDefault();render();return;}
+  if(G.tpl==='free'){freeDown(e,s);return;}
+  if(G.tpl==='game'){const t=e.target.closest('[data-pay]');if(t){const k=st.prob+':'+t.dataset.pay;st.marks[k]=!st.marks[k];if(st.marks[k])st.show.marks=true;render();save();}return;}
+  const t=e.target.closest('[data-drag]');if(!t)return;const kind=t.dataset.drag,key=t.dataset.key;
+  const fr=FRAMES[t.dataset.fr]||FRAMES[FRM[G.tpl]||'main'];
+  let orig=null;if(kind==='line')orig=copy(st[key]);else if(kind==='end')orig=copy(st[key.split(':')[0]]);else if(kind==='shift')orig=st.a;else if(kind==='off')orig=st[key.split(':')[0]];
+  drag={kind,key,orig,fr,start:toEcon(s,fr)};svg.setPointerCapture(e.pointerId);e.preventDefault();
+});
+function freeDown(e,s){const st=cur(),fr=FRAMES.main,raw=toEcon(s,fr),pt={q:cl(raw.q,0,100),p:cl(raw.p,0,100)};
+  if(st.tool==='select'){const t=e.target.closest('[data-fo]');
+    if(!t){if(st.sel!=null){st.sel=null;buildCtrl();render();}return;}
+    const id=+t.dataset.fo,o=st.objs.find(x=>x.id===id);if(!o)return;
+    if(st.sel!==id){st.sel=id;buildCtrl();}
+    drag={kind:'free',part:t.dataset.part,id,orig:copy(o),fr,start:pt};svg.setPointerCapture(e.pointerId);e.preventDefault();render();return;}
+  const type=st.tool,label=autoLabel(st,type),o={id:st.nid++,type,label,color:FCOL[label]||PAL[st.objs.length%PAL.length]};
+  if(type==='line')Object.assign(o,{x1:pt.q,y1:pt.p,x2:pt.q,y2:pt.p});else Object.assign(o,{h:pt.q,k:pt.p,a:type==='check'?0.03:0.02});
+  st.draft=o;drag={kind:'fdraw',fr,start:pt};svg.setPointerCapture(e.pointerId);e.preventDefault();render();}
+svg.addEventListener('pointermove',e=>{
+  if(stroke){const s=toSvg(e);const last=stroke.p[stroke.p.length-1];if(Math.hypot(s.x-last[0],s.y-last[1])>1.5){stroke.p.push([Math.round(s.x),Math.round(s.y)]);render();}return;}
+  if(!drag)return;const d=drag,pt=toEcon(toSvg(e),d.fr),st=cur(),dq=pt.q-d.start.q,dp=pt.p-d.start.p;
+  if(d.kind==='line'){const o=d.orig;const tq=cl(dq,-80,80),tp=cl(dp,-80,80);
+    st[d.key]=fitLine({x1:o.x1+tq,y1:o.y1+tp,x2:o.x2+tq,y2:o.y2+tp})||st[d.key];}
+  else if(d.kind==='end'){const[k,i]=d.key.split(':'),o=i==='1'?'2':'1',n=copy(d.orig);n['x'+i]=cl(pt.q,0,100);n['y'+i]=cl(pt.p,0,100);
+    if(Math.abs(n['x'+i]-n['x'+o])>=4){const s=(n.y2-n.y1)/(n.x2-n.x1);if((k==='D'&&s<-0.05)||(k==='S'&&s>0.05))st[k]=n;}}
+  else if(d.kind==='hline')st[d.key]=cl(pt.p,1,99);
+  else if(d.kind==='shift')st.a=cl(d.orig+dp,30,95);
+  else if(d.kind==='atc'){const q=cl(pt.q,5,100);st.F=cl((pt.p-AVC(q,st.a))*q,0,4000);}
+  else if(d.kind==='afc'){const q=cl(pt.q,3,100);st.F=cl(pt.p*q,0,4000);}
+  else if(d.kind==='tline')st.t=cl(pt.p-st.pw,0,90);
+  else if(d.kind==='off'){const[f,s]=d.key.split(':');st[f]=cl(d.orig+Number(s)*dp,0,80);}
+  else if(d.kind==='nmatc'){const q=cl(pt.q,3,100);st.F=cl((pt.p-st.c)*q,0,5000);}
+  else if(d.kind==='vline')st[d.key]=cl(pt.q,2,d.fr.qmax-2);
+  else if(d.kind==='scale'){const L=cl(pt.q,5,108),base=d.key==='TP'?TPb(L):d.key==='MP'?MPb(L):APb(L);if(base>(d.key==='TP'?150:3))st.s=cl(pt.p/base,0.4,1.15);}
+  else if(d.kind==='tfc')st.F=cl(pt.p,0,4000);
+  else if(d.kind==='fdraw'){const o=st.draft,q=cl(pt.q,0,100),p=cl(pt.p,0,100);if(o){if(o.type==='line')snapEnd(o,'2',q,p);else{const dx=q-o.h;if(Math.abs(dx)>2&&p>o.k+1)o.a=cl((p-o.k)/(dx*dx)/(dx<0&&o.type==='check'?0.3:1),0.002,2);}}}
+  else if(d.kind==='free'){const o=st.objs.find(x=>x.id===d.id),O=d.orig,q=cl(pt.q,0,100),p=cl(pt.p,0,100);if(o){
+    if(d.part==='body'){if(o.type==='line'){const tq=cl(dq,-Math.min(O.x1,O.x2),100-Math.max(O.x1,O.x2)),tp=cl(dp,-Math.min(O.y1,O.y2),100-Math.max(O.y1,O.y2));Object.assign(o,{x1:O.x1+tq,x2:O.x2+tq,y1:O.y1+tp,y2:O.y2+tp});}else{o.h=cl(O.h+dq,0,100);o.k=cl(O.k+dp,0,100);}}
+    else if(d.part==='p1'||d.part==='p2')snapEnd(o,d.part[1],q,p);
+    else if(d.part==='v'){o.h=q;o.k=p;}
+    else if(d.part==='arm'){const dx=q-o.h;if(Math.abs(dx)>2&&p>o.k+1)o.a=cl((p-o.k)/(dx*dx)/(dx<0&&o.type==='check'?0.3:1),0.002,2);}}}
+  else if(d.kind==='tvc'||d.kind==='tcd'){const q=cl(pt.q,8,100);st.a=cl((pt.p-(d.kind==='tcd'?st.F:0)-(-1.2*q*q+0.012*q*q*q))/q,30,95);}
+  render();
+});
+function end(){if(drag&&drag.kind==='fdraw'){const st=cur(),o=st.draft;st.draft=null;
+    if(o&&(o.type!=='line'||Math.hypot(o.x2-o.x1,o.y2-o.y1)>2)){st.objs.push(o);st.sel=o.id;}buildCtrl();render();}
+  if(drag||stroke)save();drag=null;stroke=null;}
+svg.addEventListener('pointerup',end);svg.addEventListener('pointercancel',end);
+
+/* ---------- toolbar ---------- */
+const tDrag=document.getElementById('tDrag'),tPen=document.getElementById('tPen'),tNums=document.getElementById('tNums');
+function setTool(t){G.tool=t;tDrag.setAttribute('aria-pressed',t==='drag');tPen.setAttribute('aria-pressed',t==='pen');svg.classList.toggle('pen',t==='pen');}
+tDrag.onclick=()=>setTool('drag');tPen.onclick=()=>setTool('pen');
+document.querySelectorAll('[data-pc]').forEach(b=>b.onclick=()=>{G.pen=b.dataset.pc;document.querySelectorAll('[data-pc]').forEach(x=>x.setAttribute('aria-pressed',x===b));setTool('pen');save();});
+document.getElementById('tUndo').onclick=()=>{cur().strokes.pop();render();save();};
+document.getElementById('tClear').onclick=()=>{cur().strokes=[];render();save();};
+tNums.onclick=()=>{G.nums=!G.nums;tNums.setAttribute('aria-pressed',G.nums);render();save();};
+document.getElementById('tFull').onclick=()=>{const w=document.getElementById('boardWrap');try{if(document.fullscreenElement)document.exitFullscreen();else{const r=w.requestFullscreen&&w.requestFullscreen();if(r&&r.catch)r.catch(()=>{});}}catch(e){}};
+
+document.querySelectorAll('[data-pc]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.pc===G.pen));
+tNums.setAttribute('aria-pressed',G.nums);
+buildCtrl();render();
+})();
+</script>
+
+</body>
+</html>

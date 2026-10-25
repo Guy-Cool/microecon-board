@@ -159,12 +159,15 @@ svg#board.pen{cursor:crosshair}
 svg.pen .cv[data-drag],svg.pen .hd{cursor:crosshair}
 @media (prefers-reduced-motion:no-preference){.tabs button,.tool button{transition:background .15s}}
 [hidden]{display:none!important}
+.homelink{align-self:flex-start;font-size:.82rem;font-weight:600;color:var(--accent);text-decoration:none;border:1px solid var(--rule);background:var(--surface);padding:3px 12px;border-radius:999px}
+.homelink:hover{border-color:var(--accent)}
 </style>
 </head>
 <body>
 
 
 <div class="app">
+  <a class="homelink" href="index.html">← Home (首頁)</a>
   <header class="top">
     <div class="brand">
       <h1>Macro Econ Board <small>(總經互動畫板)</small></h1>

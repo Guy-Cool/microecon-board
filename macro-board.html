@@ -281,7 +281,7 @@ const LINES={
 for(const k in LINES)LINES[k].push(['dots','Points & arrows (標記點與箭頭)','--ink']);
 const oGhost=['ghost','Keep original curves (保留原曲線虛線)','--muted'];
 const OPTS={
-  free:[['letters','Point letters A, B, C (交點字母)','--ink']],
+  free:[['autoX','Auto-mark crossings of drawn lines (自動標出交點)','--muted'],['letters','Point letters A, B, C (點的字母)','--ink']],
   adas:[oGhost,['gap','Output gap arrow (產出缺口標示)','--aLoss']],
   keyn:[oGhost,['gap','Output gap arrow (產出缺口標示)','--aLoss']],
   money:[oGhost],chain:[oGhost],loan:[oGhost],pc:[oGhost],fx:[oGhost]
@@ -291,7 +291,7 @@ const BASEKEYS={adas:['AD','AS','yf'],keyn:['A','b'],money:['MS','MD'],chain:['M
 
 /* ---------- state ---------- */
 const LD={x1:5,y1:90,x2:95,y2:10},LS={x1:5,y1:10,x2:95,y2:90};
-const showOf=k=>Object.fromEntries(OPTS[k].map(o=>[o[0],true]));
+const showOf=k=>Object.fromEntries(OPTS[k].map(o=>[o[0],o[0]!=='autoX']));
 const linesOf=k=>Object.fromEntries(LINES[k].map(o=>[o[0],true]));
 const BASE={
   free:()=>({objs:[],nid:1,tool:'line',sel:null,draft:null,yl:'PL',xl:'Y',trash:null,pts:[]}),
@@ -494,7 +494,7 @@ const inMain=(q,p)=>ok(q)&&ok(p)&&q>=0&&q<=100&&p>=0&&p<=100;
 function pxd(a,b){const f=FRAMES.main;return Math.hypot((a.q-b.q)*f.w/f.qmax,(a.p-b.p)*f.h/f.pmax);}
 function toE(x,y){const f=FRAMES.main;return[(x-f.x)/f.w*f.qmax,(1-(y-f.y)/f.h)*f.pmax];}
 /* intersections of the drawn lines (not pen strokes); letters skip those used by marked points */
-function freeAuto(st){const mine=st.pts||[],ps=st.objs.map(o=>({o,P:objPoly(o)}));let pts=[];
+function freeAuto(st){if(!st.show.autoX)return[];const mine=st.pts||[],ps=st.objs.map(o=>({o,P:objPoly(o)}));let pts=[];
   for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++)for(const x of polyX(ps[i].P,ps[j].P))if(inMain(x.q,x.p))pts.push({q:x.q,p:x.p,a:ps[i].o,b:ps[j].o});
   pts.sort((u,v)=>u.q-v.q);const uniq=[];for(const p of pts)if(!uniq.some(u=>Math.abs(u.q-p.q)<1.2&&Math.abs(u.p-p.p)<1.2))uniq.push(p);
   const keep=uniq.filter(u=>!mine.some(m=>Math.abs(m.q-u.q)<1.2&&Math.abs(m.p-u.p)<1.2));
@@ -524,13 +524,13 @@ TPL.free=function(st,lay){const rows=[],objs=st.objs.slice();if(st.draft)objs.pu
     const okY=!usedY.some(v=>Math.abs(v-p.p)<4),okX=!usedX.some(v=>Math.abs(v-p.q)<5);if(okY)usedY.push(p.p);if(okX)usedX.push(p.q);
     lay.guides+=guide(p.q,p.p,{pl:lt&&okY?sub(escH(ysym),Lt):'',ql:lt&&okX?sub(escH(xsym),Lt):''});lay.points+=dot(p.q,p.p,lt?Lt:'',false,false,8,-8);
     rows.push([`${lt?Lt+': ':''}${p.kind==='auto'?nm(p.a)+' × '+nm(p.b):p.snap?'crossing of drawn lines (畫線交叉點)':'marked point (標點)'}`,`(${f1(p.q)}, ${f1(p.p)})`]);}
-  const head=[['Lines drawn (已畫線數)',String(st.objs.length),'em'],['Intersections (交點數)',String(auto.length),'em'],['Marked points (標點數)',String(mine.length),'em']];if(rows.length)head.push('-');
+  const head=[['Lines drawn (已畫線數)',String(st.objs.length),'em'],['Marked points (標點數)',String(mine.length),'em']];if(rows.length)head.push('-');
   return{rows:head.concat(rows),status:null,yt:escH(st.yl),xt:escH(st.xl)};
 };
 
 /* ---------- side panel ---------- */
 const HINTS={
-  free:['Pick a tool, then drag on the board. <b>Line:</b> drag from start to end; nearly flat or upright lines snap straight (good for LRAS and MS). <b>Curves:</b> drag from one end to the other; select it later to adjust the bend. Lines made with these tools get intersections and dashed lines by themselves. <b>Point:</b> click anywhere to add a lettered point with dashed lines to both axes; near a spot where pen strokes or lines cross, it snaps onto the crossing. Click a point again to remove it.','選好工具後在畫布上拖曳。<b>直線：</b>從起點拖到終點，接近水平或垂直時會自動拉直（畫 LRAS、MS 很方便）。<b>曲線：</b>從一端拖到另一端，之後可用「選取移動」調整彎曲程度。用這些工具畫的線會自動標出交點和虛線。<b>標點：</b>在任何位置點一下，就會依序產生 A、B、C… 的點，並畫虛線到兩軸；點在畫筆線條或直線交叉處附近時，會自動對準交叉點。再點同一個點一次就會刪除。'],
+  free:['Pick a tool, then drag on the board. <b>Line:</b> drag from start to end; nearly flat or upright lines snap straight (good for LRAS and MS). <b>Curves:</b> drag from one end to the other; select it later to adjust the bend. Crossings are not marked automatically; you decide which ones to show. <b>Point:</b> click anywhere to add a lettered point with dashed lines to both axes; near a spot where pen strokes or lines cross, it snaps onto the crossing. Click a point again to remove it. To mark every crossing at once, tick “Auto-mark crossings”.','選好工具後在畫布上拖曳。<b>直線：</b>從起點拖到終點，接近水平或垂直時會自動拉直（畫 LRAS、MS 很方便）。<b>曲線：</b>從一端拖到另一端，之後可用「選取移動」調整彎曲程度。交點不會自動出現，由你決定要標哪些。<b>標點：</b>在任何位置點一下，就會依序產生 A、B、C… 的點，並畫虛線到兩軸；點在畫筆線條或直線交叉處附近時，會自動對準交叉點。再點同一個點一次就會刪除。想一次標出全部交點，可勾選「自動標出交點」。'],
   adas:['<b>Drag the middle</b> of AD or SRAS to shift it; <b>drag a dot</b> to change its slope. <b>Drag LRAS</b> left or right to change potential output. The original curves stay as dashed lines for comparison.','<b>拖 AD 或 SRAS 中段</b>整條平移，<b>拖圓點</b>改斜率；<b>左右拖 LRAS</b> 改變潛在產出。原曲線會留成虛線，方便比較 E₀ 與 E₁；按「Set as new baseline」可接著做下一次變動，例如示範長期自我調整。'],
   keyn:['<b>Drag AE up or down</b> to change autonomous spending; <b>drag the dot on AE</b> to change the MPC. Drag the dotted Yf marker to set potential output. The values panel checks ΔY = multiplier × ΔA.','<b>上下拖 AE 線</b>改變自發性支出，<b>拖 AE 上的圓點</b>改變 MPC（斜率）。拖點狀 Yf 標記線設定潛在產出。數值區會驗算 ΔY = 乘數 × ΔA，並算出補足缺口所需的支出變動。'],
   money:['<b>Drag MS left or right</b> for open market operations; <b>drag MD</b> to show changes in money demand.','<b>左右拖 MS</b> 示範公開市場操作（買債券 → MS 右移）；<b>拖 MD</b> 示範貨幣需求變動（例如物價或所得上升 → MD 右移）。'],

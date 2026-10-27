@@ -16,7 +16,7 @@
   --cD:#2457b3; --cS:#c24a12; --cMC:#b0246f; --cATC:#1d7a5c; --cAVC:#8a7414; --cMR:#6a49c9; --cP:#27322d;
   --aCS:#3d7be0; --aPS:#e3940e; --aDWL:#7a808c; --aPro:#1c9a54; --aLoss:#d23b3b; --aop:.22;
   --good:#1c7a46; --warn:#9a6400; --bad:#b83232;
-  --inkR:#d23b3b; --inkB:#2457b3;
+  --inkR:#d23b3b; --inkB:#2457b3; --inkG:#1c8a4a; --inkO:#e07a10; --inkP:#7b3fc4; --inkM:#c2287a; --inkY:#b8960b; --inkC:#0e8fa3;
   --f-hand:"LXGW WenKai TC","Kaiti TC","BiauKai","DFKai-SB","KaiTi",serif;
   --f-ui:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
   --f-num:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
@@ -27,7 +27,7 @@
     --rule:#2d3d36; --grid:#22332c; --accent:#7ccfb4; --accent-ink:#0f1915;
     --cD:#86aefc; --cS:#ff9b6a; --cMC:#f283c2; --cATC:#6fd5a9; --cAVC:#dcc66e; --cMR:#b9a4ff; --cP:#e6eee8;
     --aCS:#6c9cf5; --aPS:#f2b23e; --aDWL:#a3acb9; --aPro:#3fcf7d; --aLoss:#ff6b6b; --aop:.3;
-    --good:#5fd394; --warn:#f0b54a; --bad:#ff7b7b; --inkR:#ff8a80; --inkB:#8fb4ff;
+    --good:#5fd394; --warn:#f0b54a; --bad:#ff7b7b; --inkR:#ff8a80; --inkB:#8fb4ff; --inkG:#5fd394; --inkO:#ffad5c; --inkP:#c3a3ff; --inkM:#ff86c2; --inkY:#f2d24b; --inkC:#5fd6e8;
     color-scheme:dark;
   }
 }
@@ -36,7 +36,7 @@
   --rule:#2d3d36; --grid:#22332c; --accent:#7ccfb4; --accent-ink:#0f1915;
   --cD:#86aefc; --cS:#ff9b6a; --cMC:#f283c2; --cATC:#6fd5a9; --cAVC:#dcc66e; --cMR:#b9a4ff; --cP:#e6eee8;
   --aCS:#6c9cf5; --aPS:#f2b23e; --aDWL:#a3acb9; --aPro:#3fcf7d; --aLoss:#ff6b6b; --aop:.3;
-  --good:#5fd394; --warn:#f0b54a; --bad:#ff7b7b; --inkR:#ff8a80; --inkB:#8fb4ff;
+  --good:#5fd394; --warn:#f0b54a; --bad:#ff7b7b; --inkR:#ff8a80; --inkB:#8fb4ff; --inkG:#5fd394; --inkO:#ffad5c; --inkP:#c3a3ff; --inkM:#ff86c2; --inkY:#f2d24b; --inkC:#5fd6e8;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -69,7 +69,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:14p
 .tool .sp{flex:1}
 .sw{width:18px;height:18px;border-radius:50%;border:2px solid var(--board);box-shadow:0 0 0 1px var(--rule);padding:0!important}
 .sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
-.tool .sw.k,.tool .sw.k[aria-pressed="true"]{background:var(--ink)}.tool .sw.r,.tool .sw.r[aria-pressed="true"]{background:var(--inkR)}.tool .sw.b,.tool .sw.b[aria-pressed="true"]{background:var(--inkB)}
+.tool .sw.k,.tool .sw.k[aria-pressed="true"]{background:var(--ink)}.tool .sw.r,.tool .sw.r[aria-pressed="true"]{background:var(--inkR)}.tool .sw.b,.tool .sw.b[aria-pressed="true"]{background:var(--inkB)}.tool .sw.g,.tool .sw.g[aria-pressed="true"]{background:var(--inkG)}.tool .sw.o,.tool .sw.o[aria-pressed="true"]{background:var(--inkO)}.tool .sw.p,.tool .sw.p[aria-pressed="true"]{background:var(--inkP)}.tool .sw.m,.tool .sw.m[aria-pressed="true"]{background:var(--inkM)}.tool .sw.y,.tool .sw.y[aria-pressed="true"]{background:var(--inkY)}.tool .sw.c,.tool .sw.c[aria-pressed="true"]{background:var(--inkC)}
 svg#board{display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}
 svg#board.pen{cursor:crosshair}
 .side{display:flex;flex-direction:column;gap:12px;min-width:0}
@@ -154,7 +154,9 @@ svg#board.pen{cursor:crosshair}
 .brt{font-family:var(--f-hand);font-size:15px;fill:var(--ink);text-anchor:middle}
 .mk path{fill:var(--ink)}
 .ink{fill:none;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
-.ink.k{stroke:var(--ink)}.ink.r{stroke:var(--inkR)}.ink.b{stroke:var(--inkB)}
+.ink.k{stroke:var(--ink)}.ink.r{stroke:var(--inkR)}.ink.b{stroke:var(--inkB)}.ink.g{stroke:var(--inkG)}.ink.o{stroke:var(--inkO)}.ink.p{stroke:var(--inkP)}.ink.m{stroke:var(--inkM)}.ink.y{stroke:var(--inkY)}.ink.c{stroke:var(--inkC)}
+.sws{display:flex;flex-wrap:wrap;gap:3px;align-items:center}
+.tool .sws .sw{width:17px;height:17px;border-radius:50%;flex:none}
 .msg{font-family:var(--f-ui);font-size:14px;fill:var(--bad)}
 svg.pen .cv[data-drag],svg.pen .hd{cursor:crosshair}
 @media (prefers-reduced-motion:no-preference){.tabs button,.tool button{transition:background .15s}}
@@ -200,13 +202,21 @@ svg.pen .cv[data-drag],svg.pen .hd{cursor:crosshair}
           <button id="tDrag" aria-pressed="true"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1v12M1 7h12M7 1 5 3M7 1l2 2M7 13l-2-2M7 13l2-2M1 7l2-2M1 7l2 2M13 7l-2-2M13 7l-2 2" stroke="currentColor" stroke-width="1.4" fill="none"/></svg>Drag (拖曲線)</button>
           <button id="tPen" aria-pressed="false"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 12l1-3 7-7 2 2-7 7-3 1z" stroke="currentColor" stroke-width="1.4" fill="none"/></svg>Pen (畫筆)</button>
         </div>
+        <span class="sws" role="group" aria-label="Pen colors (畫筆顏色)">
         <button class="sw k" data-pc="k" aria-pressed="true" aria-label="Black pen (黑筆)"></button>
         <button class="sw r" data-pc="r" aria-pressed="false" aria-label="Red pen (紅筆)"></button>
         <button class="sw b" data-pc="b" aria-pressed="false" aria-label="Blue pen (藍筆)"></button>
-        <button class="plain" id="tUndo">Undo (復原一筆)</button>
-        <button class="plain" id="tClear">Clear ink (清除筆跡)</button>
+        <button class="sw g" data-pc="g" aria-pressed="false" aria-label="Green pen (綠筆)"></button>
+        <button class="sw o" data-pc="o" aria-pressed="false" aria-label="Orange pen (橘筆)"></button>
+        <button class="sw p" data-pc="p" aria-pressed="false" aria-label="Purple pen (紫筆)"></button>
+        <button class="sw m" data-pc="m" aria-pressed="false" aria-label="Pink pen (粉紅筆)"></button>
+        <button class="sw y" data-pc="y" aria-pressed="false" aria-label="Yellow pen (黃筆)"></button>
+        <button class="sw c" data-pc="c" aria-pressed="false" aria-label="Teal pen (青筆)"></button>
+        </span>
+        <button class="plain" id="tUndo" title="Undo last stroke (復原一筆)">Undo (復原)</button>
+        <button class="plain" id="tClear" title="Clear all pen strokes (清除全部筆跡)">Clear (清筆跡)</button>
         <span class="sp"></span>
-        <button class="plain" id="tNums" aria-pressed="false">Values (顯示數值)</button>
+        <button class="plain" id="tNums" aria-pressed="false" title="Show values on the axes (顯示數值)">Values (數值)</button>
         <button class="plain" id="tFull">Full screen (全螢幕)</button>
       </div>
       <svg id="board" viewBox="0 0 640 532" role="img" aria-label="Macroeconomics graph board (總經圖形畫板)"></svg>
@@ -284,7 +294,7 @@ const LD={x1:5,y1:90,x2:95,y2:10},LS={x1:5,y1:10,x2:95,y2:90};
 const showOf=k=>Object.fromEntries(OPTS[k].map(o=>[o[0],true]));
 const linesOf=k=>Object.fromEntries(LINES[k].map(o=>[o[0],true]));
 const BASE={
-  free:()=>({objs:[],nid:1,tool:'line',sel:null,draft:null,yl:'PL',xl:'Y',trash:null}),
+  free:()=>({objs:[],nid:1,tool:'line',sel:null,draft:null,yl:'PL',xl:'Y',trash:null,pts:[]}),
   adas:()=>({AD:copy(LD),AS:copy(LS),yf:50}),
   keyn:()=>({A:20,b:0.6,yf:60}),
   money:()=>({MS:50,MD:copy(LD)}),
@@ -464,7 +474,7 @@ TPL.pc=function(st,lay){const B=st.base,rows=[];const srpc=(un,pe)=>u=>pe+st.B*(
 const FCOL={AD:'cD',SRAS:'cS',AS:'cS',LRAS:'cP',AE:'cD','45°':'cP',MS:'cP',MD:'cD',D:'cD',S:'cS',ID:'cMR',SRPC:'cMC',LRPC:'cP',PPC:'cATC'};
 const PAL=['cD','cS','cMC','cATC','cAVC','cMR','cP'];
 const QL=['AD','SRAS','LRAS','AE','45°','MS','MD','D','S','ID','SRPC','LRPC','PPC'];
-const FT=[['select','Select / move (選取移動)'],['line','Line (直線)'],['curve','Convex curve (凸向原點)'],['ppc','Concave curve (凹向原點)']];
+const FT=[['select','Select / move (選取移動)'],['line','Line (直線)'],['curve','Convex curve (凸向原點)'],['ppc','Concave curve (凹向原點)'],['point','Point (標點)']];
 function autoLabel(st,type){const used=new Set(st.objs.map(o=>o.label));const pool=type==='line'?['AD','SRAS','LRAS']:type==='curve'?['SRPC']:['PPC'];return pool.find(l=>!used.has(l))||'';}
 function ctrlPt(o){const mx=(o.x1+o.x2)/2,my=(o.y1+o.y2)/2,dx=o.x2-o.x1,dy=o.y2-o.y1,L=Math.hypot(dx,dy)||1;return[mx-dy/L*o.bow*L,my+dx/L*o.bow*L];}
 function poly(o){if(o.type==='line')return[[o.x1,o.y1],[o.x2,o.y2]];const[cx,cy]=ctrlPt(o),P=[];for(let i=0;i<=48;i++){const t=i/48,a=(1-t)*(1-t),b=2*t*(1-t),c=t*t;P.push([a*o.x1+b*cx+c*o.x2,a*o.y1+b*cy+c*o.y2]);}return P;}
@@ -476,30 +486,51 @@ function polyX(A,B){const out=[];for(let i=0;i<A.length-1;i++)for(let j=0;j<B.le
 function snapEnd(o,i,q,p){const j=i==='1'?'2':'1',ox=o['x'+j],oy=o['y'+j],dx=q-ox,dy=p-oy;
   if(o.type==='line'){if(Math.abs(dy)<0.08*Math.abs(dx))p=oy;else if(Math.abs(dx)<0.08*Math.abs(dy))q=ox;}o['x'+i]=q;o['y'+i]=p;}
 function fHandle(o,part,q,p){return`<g class="hd ${o.color}" data-fo="${o.id}" data-part="${part}"><circle class="hhit" cx="${r1(X(q))}" cy="${r1(Y(p))}" r="16"/><circle class="hdot" cx="${r1(X(q))}" cy="${r1(Y(p))}" r="6.5"/></g>`;}
+
+/* ---------- free draw: points & intersections ---------- */
+const objPoly=o=>poly(o);
+const LETTERS='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const inMain=(q,p)=>ok(q)&&ok(p)&&q>=0&&q<=100&&p>=0&&p<=100;
+function pxd(a,b){const f=FRAMES.main;return Math.hypot((a.q-b.q)*f.w/f.qmax,(a.p-b.p)*f.h/f.pmax);}
+function toE(x,y){const f=FRAMES.main;return[(x-f.x)/f.w*f.qmax,(1-(y-f.y)/f.h)*f.pmax];}
+/* intersections of the drawn lines (not pen strokes); letters skip those used by marked points */
+function freeAuto(st){const mine=st.pts||[],ps=st.objs.map(o=>({o,P:objPoly(o)}));let pts=[];
+  for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++)for(const x of polyX(ps[i].P,ps[j].P))if(inMain(x.q,x.p))pts.push({q:x.q,p:x.p,a:ps[i].o,b:ps[j].o});
+  pts.sort((u,v)=>u.q-v.q);const uniq=[];for(const p of pts)if(!uniq.some(u=>Math.abs(u.q-p.q)<1.2&&Math.abs(u.p-p.p)<1.2))uniq.push(p);
+  const keep=uniq.filter(u=>!mine.some(m=>Math.abs(m.q-u.q)<1.2&&Math.abs(m.p-u.p)<1.2));
+  const used=new Set(mine.map(m=>m.lt)),freeL=LETTERS.filter(l=>!used.has(l));keep.forEach((u,i)=>u.lt=freeL[i]||'?');return keep;}
+/* click with the Point tool: remove a nearby point, or add one (snapping to where strokes or lines cross) */
+function placePoint(st,pt){const mine=st.pts||(st.pts=[]);
+  const hit=mine.findIndex(m=>pxd(m,pt)<12);if(hit>=0){mine.splice(hit,1);return;}
+  const polys=st.objs.map(objPoly).concat((st.strokes||[]).filter(k=>k.p.length>1).map(k=>k.p.map(([x,y])=>toE(x,y))));
+  let best=null,bd=14;for(let i=0;i<polys.length;i++)for(let j=i+1;j<polys.length;j++)for(const c of polyX(polys[i],polys[j])){const d=pxd(c,pt);if(d<bd){bd=d;best=c;}}
+  const P=best?{q:best.q,p:best.p}:{q:pt.q,p:pt.p};
+  const auto=freeAuto(st),same=auto.find(a=>pxd(a,P)<6);
+  const used=new Set(mine.map(m=>m.lt).concat(auto.filter(a=>a!==same).map(a=>a.lt)));
+  mine.push({q:P.q,p:P.p,lt:same?same.lt:(LETTERS.find(l=>!used.has(l))||'?'),snap:!!best});}
 TPL.free=function(st,lay){const rows=[],objs=st.objs.slice();if(st.draft)objs.push(st.draft);
   const ysym=(st.yl.trim().split(/[ ,，、(（]/)[0]||'P').slice(0,3),xsym=(st.xl.trim().split(/[ ,，、(（]/)[0]||'Q').slice(0,3);
-  if(!objs.length)lay.tags+=`<text class="empty" x="${FR.x+FR.w/2}" y="${FR.y+FR.h/2-10}" text-anchor="middle">Pick a tool on the right, then drag on the board.</text><text class="empty" x="${FR.x+FR.w/2}" y="${FR.y+FR.h/2+14}" text-anchor="middle">（在右側選工具，然後在畫布上拖曳）</text>`;
+  if(!objs.length&&!(st.strokes||[]).length&&!(st.pts||[]).length)lay.tags+=`<text class="empty" x="${FR.x+FR.w/2}" y="${FR.y+FR.h/2-10}" text-anchor="middle">Pick a tool on the right, then drag on the board.</text><text class="empty" x="${FR.x+FR.w/2}" y="${FR.y+FR.h/2+14}" text-anchor="middle">（在右側選工具，然後在畫布上拖曳）</text>`;
   for(const o of objs){const sel=o.id===st.sel&&o!==st.draft,P=poly(o);
     const d=P.map((p,i)=>(i?'L':'M')+r1(X(p[0]))+' '+r1(Y(p[1]))).join('');
     lay.curves+=`<g class="cv ${o.color}${sel?' sel':''}" data-fo="${o.id}" data-part="body"><path class="hit" d="${d}"/><path class="stroke" d="${d}"/></g>`;
     if(o.label){const e=(o.x2>o.x1+0.5||(Math.abs(o.x2-o.x1)<=0.5&&o.y2>o.y1))?[o.x2,o.y2]:[o.x1,o.y1];let x=X(e[0])+8,a='start';if(x>FR.x+FR.w-30){x=X(e[0])-8;a='end';}
       lay.tags+=`<text class="cl ${o.color}" x="${r1(x)}" y="${r1(Math.max(FR.y+14,Y(e[1])-8))}" text-anchor="${a}">${escH(o.label)}</text>`;}
     if(sel&&st.tool==='select'){lay.handles+=fHandle(o,'p1',o.x1,o.y1)+fHandle(o,'p2',o.x2,o.y2);if(o.type!=='line'){const m=P[24];lay.handles+=fHandle(o,'bow',m[0],m[1]);}}}
-  let pts=[];const ps=st.objs.map(o=>({o,P:poly(o)}));
-  for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++)for(const x of polyX(ps[i].P,ps[j].P))if(inPlot(x.q,x.p))pts.push({q:x.q,p:x.p,a:ps[i].o,b:ps[j].o});
-  pts.sort((u,v)=>u.q-v.q);const uniq=[];for(const p of pts)if(!uniq.some(u=>Math.abs(u.q-p.q)<1.2&&Math.abs(u.p-p.p)<1.2))uniq.push(p);
+  const auto=freeAuto(st),mine=st.pts||[];
+  const all=auto.map(p=>Object.assign({kind:'auto'},p)).concat(mine.map(p=>Object.assign({kind:'pt'},p))).sort((u,v)=>u.lt<v.lt?-1:u.lt>v.lt?1:0);
   const usedY=[],usedX=[];const nm=o=>o.label||(o.type==='line'?'line (線)':'curve (曲線)');
-  uniq.forEach((p,i)=>{const Lt=String.fromCharCode(65+(i%26)),lt=st.show.letters;
+  for(const p of all){if(!inMain(p.q,p.p))continue;const Lt=p.lt,lt=st.show.letters;
     const okY=!usedY.some(v=>Math.abs(v-p.p)<4),okX=!usedX.some(v=>Math.abs(v-p.q)<5);if(okY)usedY.push(p.p);if(okX)usedX.push(p.q);
     lay.guides+=guide(p.q,p.p,{pl:lt&&okY?sub(escH(ysym),Lt):'',ql:lt&&okX?sub(escH(xsym),Lt):''});lay.points+=dot(p.q,p.p,lt?Lt:'',false,false,8,-8);
-    rows.push([`${lt?Lt+': ':''}${nm(p.a)} × ${nm(p.b)}`,`(${f1(p.q)}, ${f1(p.p)})`]);});
-  const head=[['Lines drawn (已畫線數)',String(st.objs.length),'em'],['Intersections (交點數)',String(uniq.length),'em']];if(rows.length)head.push('-');
+    rows.push([`${lt?Lt+': ':''}${p.kind==='auto'?nm(p.a)+' × '+nm(p.b):p.snap?'crossing of drawn lines (畫線交叉點)':'marked point (標點)'}`,`(${f1(p.q)}, ${f1(p.p)})`]);}
+  const head=[['Lines drawn (已畫線數)',String(st.objs.length),'em'],['Intersections (交點數)',String(auto.length),'em'],['Marked points (標點數)',String(mine.length),'em']];if(rows.length)head.push('-');
   return{rows:head.concat(rows),status:null,yt:escH(st.yl),xt:escH(st.xl)};
 };
 
 /* ---------- side panel ---------- */
 const HINTS={
-  free:['Pick a tool, then drag on the board. <b>Line:</b> drag from start to end; nearly flat or upright lines snap straight (good for LRAS and MS). <b>Curves:</b> drag from one end to the other; select it later to adjust the bend with the middle dot. Intersections and dashed lines appear by themselves.','選好工具後在畫布上拖曳。<b>直線：</b>從起點拖到終點，接近水平或垂直時會自動拉直（畫 LRAS、MS 很方便）。<b>曲線：</b>從一端拖到另一端；之後用「選取移動」點它，拖中間的圓點可調整彎曲程度。交點和虛線會自動出現。'],
+  free:['Pick a tool, then drag on the board. <b>Line:</b> drag from start to end; nearly flat or upright lines snap straight (good for LRAS and MS). <b>Curves:</b> drag from one end to the other; select it later to adjust the bend. Lines made with these tools get intersections and dashed lines by themselves. <b>Point:</b> click anywhere to add a lettered point with dashed lines to both axes; near a spot where pen strokes or lines cross, it snaps onto the crossing. Click a point again to remove it.','選好工具後在畫布上拖曳。<b>直線：</b>從起點拖到終點，接近水平或垂直時會自動拉直（畫 LRAS、MS 很方便）。<b>曲線：</b>從一端拖到另一端，之後可用「選取移動」調整彎曲程度。用這些工具畫的線會自動標出交點和虛線。<b>標點：</b>在任何位置點一下，就會依序產生 A、B、C… 的點，並畫虛線到兩軸；點在畫筆線條或直線交叉處附近時，會自動對準交叉點。再點同一個點一次就會刪除。'],
   adas:['<b>Drag the middle</b> of AD or SRAS to shift it; <b>drag a dot</b> to change its slope. <b>Drag LRAS</b> left or right to change potential output. The original curves stay as dashed lines for comparison.','<b>拖 AD 或 SRAS 中段</b>整條平移，<b>拖圓點</b>改斜率；<b>左右拖 LRAS</b> 改變潛在產出。原曲線會留成虛線，方便比較 E₀ 與 E₁；按「Set as new baseline」可接著做下一次變動，例如示範長期自我調整。'],
   keyn:['<b>Drag AE up or down</b> to change autonomous spending; <b>drag the dot on AE</b> to change the MPC. Drag the dotted Yf marker to set potential output. The values panel checks ΔY = multiplier × ΔA.','<b>上下拖 AE 線</b>改變自發性支出，<b>拖 AE 上的圓點</b>改變 MPC（斜率）。拖點狀 Yf 標記線設定潛在產出。數值區會驗算 ΔY = 乘數 × ΔA，並算出補足缺口所需的支出變動。'],
   money:['<b>Drag MS left or right</b> for open market operations; <b>drag MD</b> to show changes in money demand.','<b>左右拖 MS</b> 示範公開市場操作（買債券 → MS 右移）；<b>拖 MD</b> 示範貨幣需求變動（例如物價或所得上升 → MD 右移）。'],
@@ -518,7 +549,7 @@ function buildCtrl(){const st=cur();let h='';
   const allBtns=g=>`<div class="mini"><button data-all="${g}" data-val="1">Select all (全選)</button><button data-all="${g}" data-val="0">Clear all (取消全選)</button></div>`;
   h+='<div class="sec"><div class="sh"><h2>CURVES (曲線)</h2>'+allBtns('lines')+'</div><div class="layers">'+LINES[G.tpl].map(([k,t,c])=>`<label><input type="checkbox" id="ln-${G.tpl}-${k}" data-line="${k}"${st.lines[k]!==false?' checked':''}><span class="${k==='dots'?'chipd':'chipl'}" style="${k==='dots'?'background':'border-color'}:var(${c})"></span>${t}</label>`).join('')+'</div></div>';
   if(OPTS[G.tpl].length)h+='<div class="sec"><div class="sh"><h2>SHADING &amp; MARKS (區塊與標記)</h2>'+allBtns('show')+'</div><div class="layers">'+OPTS[G.tpl].map(([k,t,c])=>`<label><input type="checkbox" id="op-${G.tpl}-${k}" data-show="${k}"${st.show[k]?' checked':''}><span class="chipc" style="background:var(${c})"></span>${t}</label>`).join('')+'</div></div>';
-  if(G.tpl==='free')h+='<div class="acts"><button data-act="fclear">Clear canvas (清空畫布)</button>'+(st.trash?'<button data-act="fundo">Undo clear (復原清空)</button>':'')+'</div>';
+  if(G.tpl==='free')h+='<div class="acts"><button data-act="fclear">Clear canvas (清空畫布)</button>'+((st.pts||[]).length?'<button data-act="fpclear">Clear points (清除標點)</button>':'')+(st.trash?'<button data-act="fundo">Undo clear (復原清空)</button>':'')+'</div>';
   else h+='<div class="acts">'+(BASEKEYS[G.tpl]?'<button data-act="base">Set as new baseline (以目前為新基準)</button>':'')+'<button data-act="reset">Reset this graph (重設此圖)</button></div>';
   ctrl.innerHTML=h;hint.innerHTML=HINTS[G.tpl][0]+'<span class="zh">'+HINTS[G.tpl][1]+'</span>';
   document.querySelectorAll('.tabs button[data-tpl]').forEach(b=>b.setAttribute('aria-selected',b.dataset.tpl===G.tpl));
@@ -532,13 +563,14 @@ document.addEventListener('keydown',e=>{if(G.tpl!=='free'||/INPUT|TEXTAREA|SELEC
 ctrl.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const st=cur();
   if(b.dataset.act==='reset'){G.st[G.tpl]=DEF[G.tpl]();buildCtrl();}
   if(b.dataset.act==='base'){st.base={};for(const k of BASEKEYS[G.tpl])st.base[k]=copy(st[k]);}
-  if(b.dataset.ftool){st.tool=b.dataset.ftool;buildCtrl();}
+  if(b.dataset.ftool){st.tool=b.dataset.ftool;if(G.tool==='pen')setTool('drag');buildCtrl();}
   if(b.dataset.ql||b.dataset.fc||b.dataset.fdel){const o=st.objs.find(x=>x.id===st.sel);if(o){
     if(b.dataset.ql){o.label=b.dataset.ql;if(FCOL[o.label])o.color=FCOL[o.label];}
     if(b.dataset.fc)o.color=b.dataset.fc;
     if(b.dataset.fdel){st.objs=st.objs.filter(x=>x!==o);st.sel=null;}}buildCtrl();}
-  if(b.dataset.act==='fclear'){if(st.objs.length||st.strokes.length)st.trash={objs:st.objs,strokes:st.strokes};st.objs=[];st.strokes=[];st.sel=null;buildCtrl();}
-  if(b.dataset.act==='fundo'&&st.trash){st.objs=st.trash.objs.concat(st.objs);st.strokes=st.trash.strokes.concat(st.strokes);st.trash=null;buildCtrl();}
+  if(b.dataset.act==='fpclear'){st.pts=[];buildCtrl();}
+  if(b.dataset.act==='fclear'){if(st.objs.length||st.strokes.length||(st.pts||[]).length)st.trash={objs:st.objs,strokes:st.strokes,pts:st.pts||[]};st.objs=[];st.strokes=[];st.pts=[];st.sel=null;buildCtrl();}
+  if(b.dataset.act==='fundo'&&st.trash){st.objs=st.trash.objs.concat(st.objs);st.strokes=st.trash.strokes.concat(st.strokes);st.pts=(st.trash.pts||[]).concat(st.pts||[]);st.trash=null;buildCtrl();}
   if(b.dataset.all){const v=b.dataset.val==='1',obj=b.dataset.all==='lines'?st.lines:st.show,list=b.dataset.all==='lines'?LINES[G.tpl]:OPTS[G.tpl];for(const o of list)obj[o[0]]=v;buildCtrl();}
   render();save();});
 document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-tpl]');if(!b)return;G.tpl=b.dataset.tpl;buildCtrl();render();save();});
@@ -556,7 +588,7 @@ function render(){const st=cur();const lay={areas:'',ghost:'',curves:'',guides:'
   svg.innerHTML=`<defs><clipPath id="cpA"><rect x="${A.x}" y="${A.y}" width="${A.w}" height="${A.h}"/></clipPath>`+(Bf?`<clipPath id="cpB"><rect x="${Bf.x}" y="${Bf.y}" width="${Bf.w}" height="${Bf.h}"/></clipPath>`:'')+
   `<marker id="ar" class="mk" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z"/></marker></defs>`+
   `<style>${hid?hid+'{display:none}':''}</style><rect x="0" y="0" width="${VW}" height="${VH}" fill="var(--board)"/>`+ax+
-  `<g clip-path="url(#cpA)">${lay.areas}${lay.ghost}${lay.curves}</g>`+(Bf?`<g clip-path="url(#cpB)">${lay.extra}</g>`:'')+`${lay.guides}<g class="ln-dots">${lay.points}</g>${lay.tags}${lay.handles}${ink}`;
+  `<g clip-path="url(#cpA)">${lay.areas}${lay.ghost}${lay.curves}</g>`+(Bf?`<g clip-path="url(#cpB)">${lay.extra}</g>`:'')+`${lay.guides}${lay.tags}${lay.handles}${ink}<g class="ln-dots">${lay.points}</g>`;
   let h='';if(out.status)h+=`<span class="status ${out.status.c}">${escH(out.status.t)}</span>`;
   h+='<dl class="ro">'+out.rows.map(r=>r==='-'?'<div class="sep"></div>':`<dt>${escH(r[0])}</dt><dd class="${r[2]||''}">${escH(r[1])}</dd>`).join('')+'</dl>';
   ro.innerHTML=h;
@@ -567,6 +599,7 @@ let drag=null,stroke=null;
 function toSvg(e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;const m=svg.getScreenCTM();return m?p.matrixTransform(m.inverse()):{x:0,y:0};}
 const toEcon=(s,f)=>({q:(s.x-f.x)/f.w*f.qmax,p:(1-(s.y-f.y)/f.h)*f.pmax});
 function freeDown(e,s){const st=cur(),fr=FRAMES.main,raw=toEcon(s,fr),pt={q:cl(raw.q,0,100),p:cl(raw.p,0,100)};
+  if(st.tool==='point'){e.preventDefault();if(raw.q<-3||raw.q>103||raw.p<-3||raw.p>103)return;placePoint(st,pt);buildCtrl();render();save();return;}
   if(st.tool==='select'){const t=e.target.closest('[data-fo]');
     if(!t){if(st.sel!=null){st.sel=null;buildCtrl();render();}return;}
     const id=+t.dataset.fo,o=st.objs.find(x=>x.id===id);if(!o)return;

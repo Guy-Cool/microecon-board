@@ -225,6 +225,7 @@ svg.pen .cv[data-drag],svg.pen .hd{cursor:crosshair}
         <button role="tab" data-tpl="prod">Production (生產函數)</button>
         <button role="tab" data-tpl="tc">Total Cost (總成本)</button>
         <button role="tab" data-tpl="uc">Unit Cost (平均與邊際成本)</button>
+        <button role="tab" data-tpl="factor">Factor Markets (要素市場)</button>
       </div>
       <div class="tg"><span>Market Structure (市場結構)</span>
         <button role="tab" data-tpl="comp">Perfect Competition (完全競爭)</button>
@@ -279,7 +280,9 @@ const FRAMES={
   main:{x:74,y:26,w:536,h:422,qmax:100,pmax:100,tq:20,tp:20},
   tc:{x:84,y:26,w:526,h:422,qmax:100,pmax:8000,tq:20,tp:2000},
   ptop:{x:84,y:22,w:526,h:218,qmax:110,pmax:2400,tq:20,tp:800},
-  pbot:{x:84,y:300,w:526,h:150,qmax:110,pmax:40,tq:20,tp:10}
+  pbot:{x:84,y:300,w:526,h:150,qmax:110,pmax:40,tq:20,tp:10},
+  mL:{x:62,y:34,w:236,h:396,qmax:100,pmax:100,tq:25,tp:25},
+  mR:{x:384,y:34,w:236,h:396,qmax:100,pmax:100,tq:25,tp:25}
 };
 const FRM={tc:'tc',prod:'ptop'};
 let FR=FRAMES.main;
@@ -338,6 +341,11 @@ const LINES={
 LINES.free=[lG];
 for(const k in LINES)LINES[k].push(['dots','Points & arrows (標記點與箭頭)','--ink']);
 LINES.game=[];
+const lDots=['dots','Points & arrows (標記點與箭頭)','--ink'];
+LINES.factorComp=[['DL','Market demand for labor D_L (勞動市場需求)','--cD'],['SL','Market supply of labor S_L (勞動市場供給)','--cS'],['W','Firm wage line w = MFC (廠商面對的工資線)','--cP'],['MRP','Firm MRP = d_L (廠商邊際收益產值)','--cMR'],['link','Link between graphs (跨圖連線)','--muted'],lG,lDots];
+LINES.factorMono=[['mD','MRP = D_L (邊際收益產值)','--cMR'],['mS','S_L = AFC (勞動供給)','--cS'],['MFC','Marginal factor cost MFC (邊際要素成本)','--cMC'],lG,lDots];
+LINES.factor=LINES.factorComp.concat(LINES.factorMono.filter(x=>!['guide','dots'].includes(x[0])));
+const LN=()=>G.tpl==='factor'?(cur().kind==='mono'?LINES.factorMono:LINES.factorComp):LINES[G.tpl];
 const oCS=['cs','Consumer surplus CS (消費者剩餘)','--aCS'],oPS=['ps','Producer surplus PS (生產者剩餘)','--aPS'],oDWL=['dwl','Deadweight loss DWL (無謂損失)','--aDWL'],oTag=['tag','Area labels (區塊標字)','--ink'];
 const OPTS={
   sd:[oCS,oPS,['ghost','Keep original curves (保留原曲線虛線)','--muted'],oTag],
@@ -353,6 +361,7 @@ const OPTS={
   mono:[['profit','Monopoly profit (獨占利潤)','--aPro'],oCS,oDWL,['qc','Competitive outcome (完全競爭對照點)','--muted'],oTag],
   natmono:[['area','Profit / loss & DWL (利潤／虧損與 DWL)','--aPro'],oCS,oTag],
   disc:[oCS,['profit','Firm profit (廠商利潤)','--aPro'],oDWL,oTag],
+  factor:[['ghost','Keep original curves (保留原曲線虛線)','--muted'],['dwl','Deadweight loss, monopsony (獨買無謂損失)','--aDWL'],['compare','Competitive outcome, monopsony (獨買時的完全競爭對照)','--muted'],oTag],
   free:[['autoX','Auto-mark crossings of drawn lines (自動標出交點)','--muted'],['letters','Point letters A, B, C (點的字母)','--ink'],['mins','Curve minimum points (曲線最低點)','--muted']],
   game:[['br','Underline best responses (最佳反應畫底線)','--ink'],['dom','Dominant strategies (優勢策略)','--aPro'],['ne','Nash equilibrium (納許均衡)','--accent'],['marks','My circles (我的圈選)','--inkR']]
 };
@@ -361,7 +370,8 @@ const KINDS={
   tax:[['seller','Tax on sellers (對賣方課稅)'],['buyer','Tax on buyers (對買方課稅)']],
   ext:[['neg','Negative (負外部性)'],['pos','Positive (正外部性)']],
   natmono:[['mono','Unregulated (不管制)'],['mc','P = MC (邊際成本定價)'],['ac','P = AC (平均成本定價)']],
-  disc:[['single','Single price (單一價格)'],['perfect','Perfect discrimination (完全差別取價)']]
+  disc:[['single','Single price (單一價格)'],['perfect','Perfect discrimination (完全差別取價)']],
+  factor:[['comp','Competitive labor market (完全競爭勞動市場)'],['mono','Monopsony (獨買)']]
 };
 
 const GAMES=[
@@ -391,7 +401,8 @@ const BASE={
   natmono:()=>({D:copy(MD),c:20,F:900,kind:'mono'}),
   disc:()=>({D:copy(MD),c:25,kind:'single'}),
   free:()=>({objs:[],nid:1,tool:'line',sel:null,draft:null,yl:'P, C',xl:'Q',trash:null,pts:[]}),
-  game:()=>({prob:0,pay:copy(GAMES.map(g=>g.pay)),marks:{},open:{}})
+  game:()=>({prob:0,pay:copy(GAMES.map(g=>g.pay)),marks:{},open:{}}),
+  factor:()=>({kind:'comp',DL:copy(LINE_D),SL:copy(LINE_S),MRP:{x1:5,y1:92,x2:95,y2:8},mD:{x1:9,y1:90,x2:97,y2:15},mS:{x1:3,y1:12,x2:97,y2:52},base:{DL:copy(LINE_D),SL:copy(LINE_S),MRP:{x1:5,y1:92,x2:95,y2:8}}})
 };
 const DEF={};for(const k in BASE)DEF[k]=()=>{const o=Object.assign(BASE[k](),{show:showOf(k),lines:linesOf(k),strokes:[]});if(k==='free')o.show.mins=false;if(k==='game'){o.show.br=false;o.show.dom=false;o.show.ne=false;}return o;};
 let G={tpl:'sd',tool:'drag',pen:'k',nums:false,st:{}};
@@ -410,16 +421,16 @@ function lineD(f){let qa=0,qb=FR.qmax;const lo=-0.8*FR.pmax,hi=1.8*FR.pmax;if(Ma
   if(qb<=qa)return'';return`M${r1(X(qa))} ${r1(Y(f.P(qa)))}L${r1(X(qb))} ${r1(Y(f.P(qb)))}`;}
 const frA=fr=>fr?` data-fr="${fr}"`:'';
 function curve(d,cls,drag,key,fr){return`<g class="cv ${cls}"${drag?` data-drag="${drag}" data-key="${key}"`:''}${frA(fr)}><path class="hit" d="${d}"/><path class="stroke" d="${d}"/></g>`;}
-function handle(q,p,key,cls){return`<g class="hd ${cls}" data-drag="end" data-key="${key}"><circle class="hhit" cx="${r1(X(q))}" cy="${r1(Y(p))}" r="16"/><circle class="hdot" cx="${r1(X(q))}" cy="${r1(Y(p))}" r="6.5"/></g>`;}
+function handle(q,p,key,cls,fr){return`<g class="hd ${cls}" data-drag="end" data-key="${key}"${frA(fr)}><circle class="hhit" cx="${r1(X(q))}" cy="${r1(Y(p))}" r="16"/><circle class="hdot" cx="${r1(X(q))}" cy="${r1(Y(p))}" r="6.5"/></g>`;}
 function labelAt(f,text,cls,q0=0,q1=FR.qmax,ghost){let last=null;for(let i=0;i<=200;i++){const q=q0+(q1-q0)*i/200,p=f(q);if(ok(p)&&p>=0.04*FR.pmax&&p<=0.96*FR.pmax)last=[q,p];}
   if(!last)return'';const[q,p]=last;let x=X(q)+8,a='start';if(x>FR.x+FR.w-30){x=X(q)-10;a='end';}
   return`<text class="cl ${cls}${ghost?' ghost':''}" x="${r1(x)}" y="${r1(Y(p)-8)}" text-anchor="${a}">${text}</text>`;}
 const inPlot=(q,p)=>ok(q)&&ok(p)&&q>=0&&q<=FR.qmax&&p>=0&&p<=FR.pmax;
 function axY(p,t){return`<text class="ax" x="${FR.x-8}" y="${r1(Y(p)+5)}" text-anchor="end">${t}${G.nums?`<tspan class="num" x="${FR.x-8}" dy="13">${fmt(p)}</tspan>`:''}</text>`;}
-function axX(q,t){return`<text class="ax" x="${r1(X(q))}" y="${FR.y+FR.h+20}" text-anchor="middle">${t}${G.nums?`<tspan class="num" x="${r1(X(q))}" dy="14">${f1(q)}</tspan>`:''}</text>`;}
+function axX(q,t,dy=0){return`<text class="ax" x="${r1(X(q))}" y="${FR.y+FR.h+20+dy}" text-anchor="middle">${t}${G.nums?`<tspan class="num" x="${r1(X(q))}" dy="14">${f1(q)}</tspan>`:''}</text>`;}
 function guide(q,p,o={}){if(!inPlot(q,p))return'';let s='';
   if(!o.noY){s+=`<line class="gd" x1="${FR.x}" y1="${r1(Y(p))}" x2="${r1(X(q))}" y2="${r1(Y(p))}"/>`;if(o.pl)s+=axY(p,o.pl);}
-  if(!o.noX){s+=`<line class="gd" x1="${r1(X(q))}" y1="${r1(Y(p))}" x2="${r1(X(q))}" y2="${FR.y+FR.h}"/>`;if(o.ql)s+=axX(q,o.ql);}
+  if(!o.noX){s+=`<line class="gd" x1="${r1(X(q))}" y1="${r1(Y(p))}" x2="${r1(X(q))}" y2="${FR.y+FR.h}"/>`;if(o.ql)s+=axX(q,o.ql,o.qdy||0);}
   return`<g class="ln-guide${o.faint?' faint':''}">${s}</g>`;}
 function dot(q,p,label,hollow,small,dx=8,dy=-8,anchor){if(!inPlot(q,p))return'';return`<circle class="pt${hollow?' hollow':''}" cx="${r1(X(q))}" cy="${r1(Y(p))}" r="${small?4.5:5.5}"/>`+(label?`<text class="ptl${small?' small':''}" x="${r1(X(q)+dx)}" y="${r1(Y(p)+dy)}" text-anchor="${anchor||(dx<0?'end':'start')}">${label}</text>`:'');}
 function area(P,cls,tagCls,tag,showTag,lay){if(!P)return;lay.areas+=`<polygon class="ar ${cls}" points="${ptsStr(P)}"/>`;
@@ -877,8 +888,70 @@ function renderQA(){const el=document.getElementById('qa');if(!el||G.tpl!=='game
     return`<div class="qa"><p class="q"><b>Q${i+1}.</b> ${esc2(it.q[0])}<span class="zh">${esc2(it.q[1])}</span></p><button class="mini-btn" data-reveal="${i}">${open?'Hide answer (隱藏答案)':'Show answer (顯示答案)'}</button>`+
       (open?`<div class="ans">${it.a.map(l=>`<p>${esc2(l[0])}<span class="zh">${esc2(l[1])}</span></p>`).join('')}</div>`:'')+'</div>';}).join('');}
 
+
+/* ---------- factor markets ---------- */
+function panelTitle(t){return`<text class="ptl small" x="${FR.x+FR.w}" y="${FR.y-14}" text-anchor="end">${t}</text>`;}
+TPL.factor=function(st,lay){const rows=[];let status=null;
+  if(st.kind==='mono'){FR=FRAMES.main;
+    const D=lf(st.mD),S=lf(st.mS),M=lin(2*S.s,S.b);
+    lay.curves+=curve(lineD(D),'cMR ln-mD','line','mD','main')+curve(lineD(S),'cS ln-mS','line','mS','main')+curve(lineD(M),'cMC ln-MFC');
+    lay.tags+=labelAt(D.P,'MRP = D<tspan font-size="13" dy="4">L</tspan>','cMR ln-mD')+labelAt(S.P,'S<tspan font-size="13" dy="4">L</tspan><tspan dy="-4"> = AFC</tspan>','cS ln-mS')+labelAt(M.P,'MFC','cMC ln-MFC');
+    lay.handles+=handle(st.mD.x1,st.mD.y1,'mD:1','cMR ln-mD','main')+handle(st.mD.x2,st.mD.y2,'mD:2','cMR ln-mD','main')+handle(st.mS.x1,st.mS.y1,'mS:1','cS ln-mS','main')+handle(st.mS.x2,st.mS.y2,'mS:2','cS ln-mS','main');
+    const A=inter(D,M),C=inter(D,S);
+    if(!(A&&A.q>0&&inPlot(A.q,A.p))){noEq(lay);return{rows,status,axes:[{fr:'main',yt:'w, MRP, MFC',xt:'L (勞動)'}]};}
+    const Lm=A.q,mrp=A.p,wm=S.P(Lm);
+    if(C&&inPlot(C.q,C.p)&&st.show.dwl)area(tri([Lm,mrp],[C.q,C.p],[Lm,wm]),'aDWL','tDWL','DWL',st.show.tag,lay);
+    lay.guides+=guide(Lm,mrp,{pl:'MRP',noX:true})+guide(Lm,wm,{pl:sub('w','m'),ql:sub('L','m')});
+    lay.points+=dot(Lm,mrp,'',false,true)+dot(Lm,wm,'',false);
+    if(C&&inPlot(C.q,C.p)&&st.show.compare){lay.guides+=guide(C.q,C.p,{pl:sub('w','c'),ql:sub('L','c'),faint:true});lay.points+=dot(C.q,C.p,'Competitive (完全競爭)',true,true);}
+    const dwl=C?polyArea(tri([Lm,mrp],[C.q,C.p],[Lm,wm])):NaN;
+    status={c:'warn',t:'Monopsony: fewer workers hired at a lower wage (獨買：僱用較少、工資較低)'};
+    rows.push(['Workers hired L_m (MRP = MFC) (獨買僱用量)',f1(Lm),'em'],['Wage paid w_m, read from S_L (獨買工資)',f1(wm),'em'],['MRP at L_m (該僱用量的 MRP)',f1(mrp)],['MRP − wage (工資低於 MRP 的差距)',f1(mrp-wm)],'-',
+      ['Competitive L_c / w_c (完全競爭僱用量／工資)',C?f1(C.q)+' / '+f1(C.p):'—'],[R_DWL,ok(dwl)?fA(dwl):'—','em']);
+    return{rows,status,axes:[{fr:'main',yt:'w, MRP, MFC',xt:'L (勞動)'}]};}
+  /* competitive: market on the left, one firm on the right */
+  const B=st.base,mD=!same(st.DL,B.DL),mS=!same(st.SL,B.SL),mR=!!B.MRP&&!same(st.MRP,B.MRP),moved=st.show.ghost&&(mD||mS),firmMoved=st.show.ghost&&(mD||mS||mR);
+  FR=FRAMES.mL;lay.tags+=panelTitle('Labor market (勞動市場)');
+  let E0=null;
+  if(moved){const D0=lf(B.DL),S0=lf(B.SL);E0=inter(D0,S0);
+    if(mD){lay.ghost+=curve(lineD(D0),'cD ghost ln-DL');lay.tags+=labelAt(D0.P,'D₀','cD ln-DL',0,100,true);}
+    if(mS){lay.ghost+=curve(lineD(S0),'cS ghost ln-SL');lay.tags+=labelAt(S0.P,'S₀','cS ln-SL',0,100,true);}
+    if(E0&&inPlot(E0.q,E0.p)){const En=inter(lf(st.DL),lf(st.SL));lay.guides+=guide(E0.q,E0.p,{pl:'w₀',ql:'L₀',faint:true,qdy:En&&Math.abs(En.q-E0.q)<10?17:0});lay.points+=dot(E0.q,E0.p,'',true,true);}else E0=null;}
+  const D=lf(st.DL),S=lf(st.SL);
+  lay.curves+=curve(lineD(D),'cD ln-DL','line','DL','mL')+curve(lineD(S),'cS ln-SL','line','SL','mL');
+  lay.tags+=labelAt(D.P,'D<tspan font-size="13" dy="4">L</tspan>','cD ln-DL')+labelAt(S.P,'S<tspan font-size="13" dy="4">L</tspan>','cS ln-SL');
+  lay.handles+=handle(st.DL.x1,st.DL.y1,'DL:1','cD ln-DL','mL')+handle(st.DL.x2,st.DL.y2,'DL:2','cD ln-DL','mL')+handle(st.SL.x1,st.SL.y1,'SL:1','cS ln-SL','mL')+handle(st.SL.x2,st.SL.y2,'SL:2','cS ln-SL','mL');
+  const E=inter(D,S);const axesC=[{fr:'mL',yt:'w (工資)',xt:'L'},{fr:'mR',yt:'w (工資)',xt:'L (廠商)'}];
+  if(!(E&&E.q>0&&inPlot(E.q,E.p))){noEq(lay);return{rows,status,axes:axesC,clipB:'mR'};}
+  lay.guides+=guide(E.q,E.p,{pl:E0?'w₁':'w*',ql:E0?'L₁':'L*'});lay.points+=dot(E.q,E.p,'');
+  const xL=X(E.q),xL0=E0?X(E0.q):0;
+  FR=FRAMES.mR;lay.tags+=panelTitle('Firm (個別廠商)');
+  const R=lf(st.MRP);
+  lay.extra+=curve(lineD(R),'cMR ln-MRP','line','MRP','mR');
+  lay.tags+=labelAt(R.P,'MRP = d<tspan font-size="13" dy="4">L</tspan>','cMR ln-MRP');
+  lay.handles+=handle(st.MRP.x1,st.MRP.y1,'MRP:1','cMR ln-MRP','mR')+handle(st.MRP.x2,st.MRP.y2,'MRP:2','cMR ln-MRP','mR');
+  const wl=`M${FR.x} ${r1(Y(E.p))}H${FR.x+FR.w}`;
+  lay.extra+=`<g class="cv cP ln-W"><path class="stroke" d="${wl}" style="stroke-width:2.6"/></g>`;
+  lay.tags+=`<text class="cl cP ln-W" x="${FR.x+FR.w-4}" y="${r1(Y(E.p)-8)}" text-anchor="end" style="font-size:15px">w = MFC</text>`;
+  const R0=mR?lf(B.MRP):R,w0=E0?E0.p:E.p;
+  if(st.show.ghost&&mR){lay.extra+=curve(lineD(R0),'cMR ghost ln-MRP');lay.tags+=labelAt(R0.P,'MRP₀','cMR ln-MRP',0,100,true);}
+  const Lf=R.Q(E.p);let Lf0=NaN;
+  if(firmMoved&&!E0&&inPlot(R0.Q(w0),w0)){Lf0=R0.Q(w0);lay.guides+=guide(Lf0,w0,{noY:true,ql:sub('l','0'),faint:true});lay.points+=dot(Lf0,w0,'',true,true);}
+  if(E0){Lf0=R0.Q(E0.p);lay.extra+=`<g class="cv cP ghost ln-W"><path class="stroke" d="M${FR.x} ${r1(Y(E0.p))}H${FR.x+FR.w}"/></g>`;
+    if(inPlot(Lf0,E0.p)){lay.guides+=`<g class="ln-link faint"><line class="gd" x1="${r1(xL0)}" y1="${r1(Y(E0.p))}" x2="${FR.x}" y2="${r1(Y(E0.p))}"/></g>`+guide(Lf0,E0.p,{noY:true,ql:sub('l','0'),faint:true});lay.points+=dot(Lf0,E0.p,'',true,true);}}
+  lay.guides+=`<g class="ln-link"><line class="gd" x1="${r1(xL)}" y1="${r1(Y(E.p))}" x2="${FR.x}" y2="${r1(Y(E.p))}"/></g>`;
+  if(inPlot(Lf,E.p)){lay.guides+=guide(Lf,E.p,{noY:true,ql:firmMoved?sub('l','1'):'l*'});lay.points+=dot(Lf,E.p,'MRP = MFC',false,false,8,20);}
+  rows.push(['Market wage w* (市場工資)',f1(E.p),'em'],['Market employment L* (市場就業量)',f1(E.q)],'-',['Firm hires l* where MRP = w (廠商僱用量)',ok(Lf)&&Lf>0?f1(Lf):'0','em'],['Firm MRP at l* (該僱用量的 MRP)',f1(R.P(Lf))]);
+  if(firmMoved&&ok(Lf0)){const dw=E.p-w0,dl=Lf-Lf0;rows.push('-',['Change in wage Δw (工資變動)',(dw>=0?'+':'')+f1(dw)],['Change in firm hiring Δl (廠商僱用變動)',(dl>=0?'+':'')+f1(dl)]);
+    const parts=[];if(Math.abs(dw)>=0.3)parts.push(dw>0?'Wage rises (工資上升)':'Wage falls (工資下降)');if(mR){const up=R.b>R0.b;parts.push(up?'MRP rises (MRP 上升)':'MRP falls (MRP 下降)');}
+    status={c:'neutral',t:(parts.length?parts.join(', ')+' → ':'')+(Math.abs(dl)<0.3?'firm hiring unchanged (廠商僱用不變)':dl>0?'firm hires more (廠商增加僱用)':'firm hires fewer (廠商減少僱用)')};}
+  else status={c:'neutral',t:'The firm is a wage taker and hires until MRP = MFC = w (廠商是工資接受者，僱用到 MRP = MFC = w)'};
+  return{rows,status,axes:axesC,clipB:'mR'};
+};
+
 /* ---------- side panel ---------- */
 const HINTS={
+  factor:['<b>Competitive:</b> drag D_L or S_L in the labor market; the new wage carries across to the firm, which hires until MRP = w. Drag the firm’s MRP to show a change in productivity or output price. <b>Monopsony:</b> drag MRP or S_L; MFC is drawn for you, and the firm hires where MRP = MFC but pays the wage on S_L.','<b>完全競爭：</b>拖左邊勞動市場的 D_L 或 S_L，新的工資會帶到右邊的廠商，廠商僱用到 MRP = w 為止。拖廠商的 MRP 可示範生產力或產品價格改變。<b>獨買：</b>拖 MRP 或 S_L，MFC 會自動畫出；廠商在 MRP = MFC 決定僱用量，但工資只付 S_L 上對應的水準。'],
   game:['Pick a problem, then ask the questions one at a time. Students can click numbers to circle them. Turn on the checkboxes to reveal best responses, dominant strategies and the Nash equilibrium. You can also change the payoffs; the answers update by themselves.','選一題後逐題提問，學生可以點表中的數字圈起來。勾選下方的選項，就會依序揭曉最佳反應、優勢策略和納許均衡。報酬數字可以自己修改，答案會自動重新計算。'],
   free:['Pick a tool, then drag on the board. <b>Line:</b> drag from start to end; nearly flat or upright lines snap straight. <b>U / MC curve:</b> press at the lowest point and drag up to one side. Crossings are not marked automatically; you decide which ones to show. <b>Point:</b> click anywhere to add a lettered point with dashed lines to both axes; near a spot where pen strokes or lines cross, it snaps onto the crossing. Click a point again to remove it. To mark every crossing at once, tick “Auto-mark crossings”.','選好工具後在畫布上拖曳。<b>直線：</b>從起點拖到終點，接近水平或垂直時會自動拉直。<b>U 形、勾形：</b>在最低點按下，往一側斜上方拖。交點不會自動出現，由你決定要標哪些。<b>標點：</b>在任何位置點一下，就會依序產生 A、B、C… 的點，並畫虛線到兩軸；點在畫筆線條或直線交叉處附近時，會自動對準交叉點。再點同一個點一次就會刪除。想一次標出全部交點，可勾選「自動標出交點」。'],
   sd:['<b>Drag the middle</b> of a curve to shift it; <b>drag a dot</b> to change its slope. The original curve stays as a dashed line so you can compare E₀ and E₁.','<b>拖曲線中段</b>整條平移，<b>拖圓點</b>改斜率。原曲線會留成虛線，方便比較 E₀ 與 E₁；按「Set as new baseline」可接著做第二次變動。'],
@@ -907,10 +980,10 @@ function buildCtrl(){const st=cur();let h='';
   if(G.tpl==='game'){const gp=st.pay[st.prob],g=GAMES[st.prob];
     h+=`<div class="sec"><h2>PROBLEM (題目)</h2><div class="seg" role="group" aria-label="Problem (題目)">${GAMES.map((x,i)=>`<button data-prob="${i}" aria-pressed="${st.prob===i}">${i+1}. ${x.title[0]} (${x.title[1]})</button>`).join('')}</div></div><div class="sec"><h2>QUESTIONS (問題)</h2><div id="qa"></div></div>`;
     h+=`<div class="sec"><h2>EDIT PAYOFFS (修改報酬)</h2><table class="payed"><tr><th></th>${g.sb.map(x=>`<th>${x[1]}</th>`).join('')}</tr>${[0,1].map(r=>`<tr><th>${g.sa[r][1]}</th>${[0,1].map(c=>`<td>${[0,1].map(p=>`<input type="number" step="1" id="pay-${st.prob}-${r}-${c}-${p}" data-payin="${r},${c},${p}" class="${p?'pb':'pa'}" value="${gp[r][c][p]}" aria-label="${p?g.B[0]:g.A[0]} payoff">`).join('')}</td>`).join('')}</tr>`).join('')}</table><p class="hint">Blue = ${g.A[0]}, orange = ${g.B[0]}<span class="zh">藍色是${g.A[1]}、橘色是${g.B[1]}的報酬</span></p></div>`;}
-  if(LINES[G.tpl].length)h+='<div class="sec"><div class="sh"><h2>CURVES (曲線)</h2>'+allBtns('lines')+'</div><div class="layers">'+LINES[G.tpl].map(([k,t,c])=>`<label><input type="checkbox" id="ln-${G.tpl}-${k}" data-line="${k}"${st.lines[k]!==false?' checked':''}><span class="${k==='dots'?'chipd':'chipl'}" style="${k==='dots'?'background':'border-color'}:var(${c})"></span>${t}</label>`).join('')+'</div></div>';
+  if(LN().length)h+='<div class="sec"><div class="sh"><h2>CURVES (曲線)</h2>'+allBtns('lines')+'</div><div class="layers">'+LN().map(([k,t,c])=>`<label><input type="checkbox" id="ln-${G.tpl}-${k}" data-line="${k}"${st.lines[k]!==false?' checked':''}><span class="${k==='dots'?'chipd':'chipl'}" style="${k==='dots'?'background':'border-color'}:var(${c})"></span>${t}</label>`).join('')+'</div></div>';
   if(OPTS[G.tpl].length)h+='<div class="sec"><div class="sh"><h2>SHADING &amp; MARKS (區塊與標記)</h2>'+allBtns('show')+'</div><div class="layers">'+OPTS[G.tpl].map(([k,t,c])=>`<label><input type="checkbox" id="op-${G.tpl}-${k}" data-show="${k}"${st.show[k]?' checked':''}><span class="chipc" style="background:var(${c})"></span>${t}</label>`).join('')+'</div></div>';
   if(G.tpl==='free')h+='<div class="acts"><button data-act="fclear">Clear canvas (清空畫布)</button>'+((st.pts||[]).length?'<button data-act="fpclear">Clear points (清除標點)</button>':'')+(st.trash?'<button data-act="fundo">Undo clear (復原清空)</button>':'')+'</div>';
-  else h+='<div class="acts">'+(G.tpl==='sd'?'<button data-act="base">Set as new baseline (以目前為新基準)</button>':'')+'<button data-act="reset">Reset this graph (重設此圖)</button></div>';
+  else h+='<div class="acts">'+((G.tpl==='sd'||(G.tpl==='factor'&&st.kind==='comp'))?'<button data-act="base">Set as new baseline (以目前為新基準)</button>':'')+'<button data-act="reset">Reset this graph (重設此圖)</button></div>';
   ctrl.innerHTML=h;hint.innerHTML=HINTS[G.tpl][0]+'<span class="zh">'+HINTS[G.tpl][1]+'</span>';
   document.querySelectorAll('.tabs button[data-tpl]').forEach(b=>b.setAttribute('aria-selected',b.dataset.tpl===G.tpl));
 }
@@ -924,7 +997,7 @@ document.addEventListener('keydown',e=>{if(G.tpl!=='free'||/INPUT|TEXTAREA|SELEC
 ctrl.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const st=cur();
   if(b.dataset.kind){st.kind=b.dataset.kind;if(G.tpl==='ctl')st.price=st.kind==='ceiling'?35:65;buildCtrl();}
   if(b.dataset.act==='reset'){G.st[G.tpl]=DEF[G.tpl]();buildCtrl();}
-  if(b.dataset.act==='base')st.base={D:copy(st.D),S:copy(st.S)};
+  if(b.dataset.act==='base')st.base=G.tpl==='factor'?{DL:copy(st.DL),SL:copy(st.SL),MRP:copy(st.MRP)}:{D:copy(st.D),S:copy(st.S)};
   if(b.dataset.ftool){st.tool=b.dataset.ftool;if(G.tool==='pen')setTool('drag');buildCtrl();}
   if(b.dataset.prob){st.prob=+b.dataset.prob;buildCtrl();}
   if(b.dataset.reveal){const k=st.prob+'-'+b.dataset.reveal;st.open[k]=!st.open[k];}
@@ -935,7 +1008,7 @@ ctrl.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)retur
   if(b.dataset.act==='fpclear'){st.pts=[];buildCtrl();}
   if(b.dataset.act==='fclear'){if(st.objs.length||st.strokes.length||(st.pts||[]).length)st.trash={objs:st.objs,strokes:st.strokes,pts:st.pts||[]};st.objs=[];st.strokes=[];st.pts=[];st.sel=null;buildCtrl();}
   if(b.dataset.act==='fundo'&&st.trash){st.objs=st.trash.objs.concat(st.objs);st.strokes=st.trash.strokes.concat(st.strokes);st.pts=(st.trash.pts||[]).concat(st.pts||[]);st.trash=null;buildCtrl();}
-  if(b.dataset.all){const v=b.dataset.val==='1',obj=b.dataset.all==='lines'?st.lines:st.show,list=b.dataset.all==='lines'?LINES[G.tpl]:OPTS[G.tpl];for(const o of list)obj[o[0]]=v;buildCtrl();}
+  if(b.dataset.all){const v=b.dataset.val==='1',obj=b.dataset.all==='lines'?st.lines:st.show,list=b.dataset.all==='lines'?LN():OPTS[G.tpl];for(const o of list)obj[o[0]]=v;buildCtrl();}
   render();save();});
 document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-tpl]');if(!b)return;
   const prev=G.tpl,next=b.dataset.tpl,pair=['tc','uc'];
@@ -950,7 +1023,7 @@ function render(){const st=cur();const lay={areas:'',ghost:'',curves:'',guides:'
   const axList=out.axes||[{fr:fr0,yt:out.yt,xt:out.xt}];
   let ax='';if(!out.noAxes)for(const a of axList){FR=FRAMES[a.fr];ax+=axes(a.yt,a.xt);}
   const A=FRAMES[axList[0].fr],Bf=out.clipB?FRAMES[out.clipB]:null;
-  const hid=LINES[G.tpl].map(x=>x[0]).filter(id=>st.lines[id]===false).map(id=>'#board .ln-'+id).join(',');
+  const hid=LN().map(x=>x[0]).filter(id=>st.lines[id]===false).map(id=>'#board .ln-'+id).join(',');
   const ink=(st.strokes||[]).map(s=>`<path class="ink ${s.c}" d="${s.p.map((p,i)=>(i?'L':'M')+p[0]+' '+p[1]).join('')}"/>`).join('');
   svg.innerHTML=`<defs><clipPath id="cpA"><rect x="${A.x}" y="${A.y}" width="${A.w}" height="${A.h}"/></clipPath>`+(Bf?`<clipPath id="cpB"><rect x="${Bf.x}" y="${Bf.y}" width="${Bf.w}" height="${Bf.h}"/></clipPath>`:'')+
   `<marker id="ar" class="mk" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z"/></marker></defs>`+
@@ -992,7 +1065,7 @@ svg.addEventListener('pointermove',e=>{
   if(d.kind==='line'){const o=d.orig;const tq=cl(dq,-80,80),tp=cl(dp,-80,80);
     st[d.key]=fitLine({x1:o.x1+tq,y1:o.y1+tp,x2:o.x2+tq,y2:o.y2+tp})||st[d.key];}
   else if(d.kind==='end'){const[k,i]=d.key.split(':'),o=i==='1'?'2':'1',n=copy(d.orig);n['x'+i]=cl(pt.q,0,100);n['y'+i]=cl(pt.p,0,100);
-    if(Math.abs(n['x'+i]-n['x'+o])>=4){const s=(n.y2-n.y1)/(n.x2-n.x1);if((k==='D'&&s<-0.05)||(k==='S'&&s>0.05))st[k]=n;}}
+    if(Math.abs(n['x'+i]-n['x'+o])>=4){const s=(n.y2-n.y1)/(n.x2-n.x1);if(s*({D:-1,S:1,DL:-1,SL:1,MRP:-1,mD:-1,mS:1}[k]||0)>0.05)st[k]=n;}}
   else if(d.kind==='hline')st[d.key]=cl(pt.p,1,99);
   else if(d.kind==='shift')st.a=cl(d.orig+dp,30,95);
   else if(d.kind==='atc'){const q=cl(pt.q,5,100);st.F=cl((pt.p-AVC(q,st.a))*q,0,4000);}
